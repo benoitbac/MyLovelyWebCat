@@ -1,0 +1,17 @@
+{
+  "name": "miaou-engine",
+  "type": "module",
+  "description": "Cœur moteur de Miaou (simulation de jeu) compilé en WebAssembly.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "files": [
+    "miaou_engine_bg.wasm",
+    "miaou_engine.js",
+    "miaou_engine.d.ts"
+  ],
+  "main": "miaou_engine.js",
+  "types": "miaou_engine.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

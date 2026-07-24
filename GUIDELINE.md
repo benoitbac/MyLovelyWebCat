@@ -71,42 +71,46 @@ pensé pour devenir une image / un clip partageable sur les réseaux — toujour
 
 ---
 
-## 5. Architecture cible
+## 5. Architecture cible — stack studio
 
-Stack retenu (voir arbitrages) :
+Objectif produit : un **« game of life » de chat** (élevage/vie + customisation poussée),
+**multijoueur**, avec de **vrais mini-jeux**. On assume une stack pro moderne, chaque
+techno à sa juste place.
 
-| Domaine            | Choix                                                                                        | Pourquoi                                      |
-| ------------------ | -------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Build / DX         | **Vite + TypeScript**                                                                        | rapide, zéro-config, HMR                      |
-| UI                 | **Svelte 5**                                                                                 | runtime minuscule, réactivité fine → fluidité |
-| Rendu chat         | **WebGPU** (+ Canvas2D fallback)                                                             | performance et style                          |
-| État / persistance | store Svelte + **IndexedDB**                                                                 | offline-first                                 |
-| Temps réel         | **WebRTC** (getUserMedia, DataChannel)                                                       | vidéo/audio/contrôle P2P                      |
-| Mobile             | **PWA** (manifest + service worker)                                                          | installable, notifications                    |
-| Plus tard          | **Tauri** (desktop pet natif), **backend** (signaling/relay + comptes), **ESP32** (hardware) | évolutif                                      |
+| Domaine              | Choix                                                  | Pourquoi                                             |
+| -------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| Cœur moteur (jeux)   | **Rust → WebAssembly** (`engine/`)                     | simulation/physique déterministe, rapide, portable   |
+| Backend / multi      | **.NET 9 · ASP.NET Core + SignalR** (`server/`)        | temps réel (arène bureau), API, classements, comptes |
+| Shell / UI / rendu   | **Vite + TypeScript + Svelte 5** (`src/`)              | orchestration, rendu Canvas/SVG, réactivité fluide   |
+| Illustration du chat | **SVG vectoriel** recolorable (ADN)                    | mignon, net, scalable, customisable                  |
+| État / persistance   | store Svelte + **IndexedDB** (local), **.NET** (cloud) | offline-first puis sauvegarde/compte                 |
+| Mobile               | **PWA**                                                | installable                                          |
+| Plus tard            | WebRTC (cam/pilier « vrai chat »), Tauri, hardware     | évolutif                                             |
 
-> **Tradeoff assumé** : Svelte donne une base plus légère/fluide que React, au prix
-> d'un écosystème un peu plus petit. Les briques temps-réel (WebRTC, média) sont de
-> toute façon agnostiques du framework.
+> Le jeu tourne **dans le navigateur** (exigence de base) : Rust vit en **WASM** côté
+> client (le moteur), .NET est le **backend** (multi/persistance/social). C'est la plus
+> grosse stack _sérieuse_ pour un jeu web multi — et elle **compile/tourne** déjà (moteur
+> WASM bundlé, serveur `/health` + `/api/scores` OK).
 
-### Découpage modulaire
+### Découpage (monorepo)
 
 ```
-src/
-├── engine/         # WebGPU : rendu + boucle d'animation (le "corps" du chat)
-├── companion/      # machine à états, humeurs, besoins (Tamagotchi)
-├── customization/  # ADN cosmétique (couleurs, accessoires, morphologie)
-├── sharing/        # capture, cartes, liens, export réseaux
-├── playroom/       # Pilier 2 : jeux pour le vrai chat
-├── vision/         # détection mouvement/patte via caméra (CV)
-├── realtime/       # Pilier 3 : WebRTC, appairage, contrôle distant
-├── state/          # store global + persistance IndexedDB
-├── ui/             # composants Svelte, écrans, design system
-└── lib/            # utils partagés
-public/             # manifest PWA, icônes, assets
-dashboard/          # tableau de bord des sprints (versionné)
-planning/           # notes de sprint
+engine/            # 🦀 Rust : cœur moteur des jeux → compilé en WASM
+│   └── src/lib.rs #    (Miaou Pounce : chat, proies, bond, collisions, score…)
+server/            # ⚡ .NET 9 : API + SignalR (arène temps réel, classements)
+│   ├── Program.cs
+│   └── Hubs/ArenaHub.cs
+src/               # 🕸️ Web (Svelte/TS)
+├── wasm/          #    binding généré du moteur Rust (wasm-pack, versionné)
+├── game/          #    rendu canvas + son du jeu (lit les buffers WASM)
+├── companion/     #    cerveau du chat : humeurs, expression, regard
+├── customization/ #    ADN cosmétique (couleurs, morphologie, partage URL)
+├── state/         #    persistance IndexedDB
+└── ui/            #    composants & écrans Svelte
 ```
+
+Build : `npm run build:engine` (Rust→WASM) puis `npm run build` (web) ; `dotnet run`
+dans `server/` pour le backend.
 
 ---
 
@@ -145,18 +149,17 @@ planning/           # notes de sprint
 
 Détail interactif & suivi dans le **[dashboard](dashboard/index.html)**.
 
-| #   | Sprint                 | Pilier | Objectif                                                                     |
-| --- | ---------------------- | ------ | ---------------------------------------------------------------------------- |
-| 0   | Fondations & outillage | —      | Scaffold Vite+TS+Svelte, PWA, WebGPU bootstrap, design system, dashboard, CI |
-| 1   | Le compagnon vivant    | 1      | Rendu WebGPU du chat + animation + réactions souris + humeurs de base        |
-| 2   | Tamagotchi             | 1      | Besoins qui évoluent, actions (caresser/nourrir/jouer), persistance          |
-| 3   | ADN cosmétique         | 1      | Customisation (couleurs, accessoires, morpho) + déblocables                  |
-| 4   | Partage social         | 1      | Capture image/clip, cartes, liens, export réseaux                            |
-| 5   | Playroom               | 2      | Jeux plein écran pour le vrai chat + capture de moments                      |
-| 6   | Vision & interaction   | 2      | Détection mouvement/patte (caméra), attrapabilité                            |
-| 7   | Home local             | 3      | Appairage téléphone↔maison (WebRTC local), live + audio + jeu à distance     |
-| 8   | Cloud & comptes        | 3      | Backend signaling/relay, accès distant réel, galerie partagée                |
+**Sprint 1 = « game of life de chat, multi, avec jeux »** (la belle step 1).
+Fondations posées : moteur **Rust/WASM**, backend **.NET/SignalR**, shell **Svelte**.
 
-**Backlog / exploratoire** : Tauri (desktop pet always-on-top), hardware ESP32
-(distributeur de croquettes / jouet connecté), personnalité IA + voix, multi-chats,
-marketplace d'accessoires.
+| Lot | Contenu                                                                              | Stack             | État |
+| --- | ------------------------------------------------------------------------------------ | ----------------- | ---- |
+| 1a  | **Fondations stack** : moteur Rust→WASM + backend .NET (health/scores/SignalR) + web | Rust · .NET · TS  | ✅   |
+| 1b  | **Création du chat (type GTA)** : couleurs, morpho, accessoires, nom — à l'entrée    | Svelte · ADN      | ⏳   |
+| 1c  | **Le chat vit (game of life)** : besoins, humeurs, vie autonome, soins, économie     | Svelte · WASM     | ⏳   |
+| 1d  | **Vrais jeux** : Miaou Pounce (fait) + 2-3 autres bien faits, bonus, déblocables     | Rust/WASM         | 🟡   |
+| 1e  | **Multijoueur bureau** : arène SignalR (voir jouer, scores live, classements)        | .NET/SignalR · TS | ⏳   |
+| 1f  | **Partage social** : cartes de score/chat, liens, export réseaux                     | Svelte · .NET     | ⏳   |
+
+**Après la step 1** : pilier « vrai chat » (caméra/WebRTC), comptes cloud & sauvegarde,
+appli mobile (PWA/Tauri), hardware (ESP32), personnalité IA.

@@ -1,0 +1,17 @@
+[package]
+name = "miaou-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Cœur moteur de Miaou (simulation de jeu) compilé en WebAssembly."
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1

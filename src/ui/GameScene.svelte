@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import CatSvg from './CatSvg.svelte';
-  import { Game } from '../game/engine';
+  import init, { Game } from '../wasm/miaou_engine';
   import { draw } from '../game/render';
   import { sndCatch, sndGolden, sndPounce, sndOver, resumeAudio } from '../game/sound';
   import { setGazeOverride, play, pet } from '../companion/loop';
@@ -10,8 +10,7 @@
   let host!: HTMLDivElement;
   let canvas!: HTMLCanvasElement;
 
-  // Valeurs réactives pour le HUD et la position du chat.
-  let phase = $state<'menu' | 'playing' | 'over'>('menu');
+  let phase = $state(0); // 0 menu, 1 playing, 2 over
   let score = $state(0);
   let combo = $state(0);
   let mult = $state(1);
@@ -24,33 +23,22 @@
   let catFacing = $state(1);
   let catBaseY = $state(0);
 
-  const game = new Game({
-    onCatch: (p) => {
-      if (p.kind === 'golden') sndGolden();
-      else sndCatch(game.combo);
-      pet();
-      navigator.vibrate?.(8);
-    },
-    onPounce: () => sndPounce(),
-    onOver: (_s, b) => {
-      sndOver();
-      void kvSet('bestScore', b);
-    },
-  });
-
+  let game: Game | null = null;
   let raf = 0;
   let last = 0;
   let ctx: CanvasRenderingContext2D | null = null;
   let ro: ResizeObserver;
+  let W = 0;
+  let H = 0;
 
   function resize() {
-    const w = host.clientWidth;
-    const h = host.clientHeight;
+    W = host.clientWidth;
+    H = host.clientHeight;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
     ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
-    game.resize(w, h);
+    game?.resize(W, H);
   }
 
   function localXY(e: PointerEvent) {
@@ -59,13 +47,14 @@
   }
   function onMove(e: PointerEvent) {
     const p = localXY(e);
-    game.setCursor(p.x, p.y);
+    game?.set_cursor(p.x, p.y);
   }
   function onDown(e: PointerEvent) {
+    if (!game) return;
     resumeAudio();
     const p = localXY(e);
-    game.setCursor(p.x, p.y);
-    const wasPlaying = game.phase === 'playing';
+    game.set_cursor(p.x, p.y);
+    const wasPlaying = game.phase === 1;
     game.pounce();
     if (!wasPlaying) play();
   }
@@ -75,40 +64,59 @@
     const dt = last ? Math.min(now - last, 0.05) : 0.016;
     last = now;
 
-    game.update(dt);
-    if (ctx) draw(ctx, game);
+    if (game) {
+      game.update(dt);
+      if (ctx) draw(ctx, game, W, H);
 
-    // HUD + chat.
-    phase = game.phase;
-    score = game.score;
-    combo = game.combo;
-    mult = game.mult;
-    timeLeft = game.timeLeft;
-    best = game.best;
-    bestCombo = game.bestCombo;
-    catX = game.cat.x;
-    catLift = game.cat.lift;
-    catSquash = game.cat.squash;
-    catFacing = game.cat.facing;
-    catBaseY = game.baseY;
+      // Événements → son / réactions.
+      const ev = game.take_events();
+      for (let i = 0; i < ev.length; i += 2) {
+        const code = ev[i];
+        if (code === 1) {
+          if (ev[i + 1] === 2) sndGolden();
+          else sndCatch(game.combo);
+          pet();
+          navigator.vibrate?.(8);
+        } else if (code === 2) {
+          sndPounce();
+        } else if (code === 3) {
+          sndOver();
+          void kvSet('bestScore', game.best);
+        }
+      }
 
-    // Le regard suit le laser.
-    setGazeOverride({
-      x: Math.max(-1, Math.min(1, (game.cursor.x - game.cat.x) / 130)),
-      y: Math.max(-1, Math.min(1, (game.cursor.y - (game.baseY - 70)) / 130)),
-    });
+      phase = game.phase;
+      score = game.score;
+      combo = game.combo;
+      mult = game.mult;
+      timeLeft = game.time_left;
+      best = game.best;
+      bestCombo = game.best_combo;
+      catX = game.cat_x;
+      catLift = game.cat_lift;
+      catSquash = game.cat_squash;
+      catFacing = game.cat_facing;
+      catBaseY = game.base;
+
+      setGazeOverride({
+        x: Math.max(-1, Math.min(1, (game.cursor_x - game.cat_x) / 130)),
+        y: Math.max(-1, Math.min(1, (game.cursor_y - (game.base - 70)) / 130)),
+      });
+    }
 
     raf = requestAnimationFrame(frame);
   }
 
   onMount(async () => {
     ctx = canvas.getContext('2d');
+    await init();
+    game = new Game((Math.floor(Math.random() * 4294967295) + 1) >>> 0);
     ro = new ResizeObserver(resize);
     ro.observe(host);
     resize();
-    document.body.style.cursor = 'none'; // le laser remplace le curseur
+    document.body.style.cursor = 'none';
     const b = await kvGet<number>('bestScore');
-    if (typeof b === 'number') game.loadBest(b);
+    if (typeof b === 'number') game.load_best(b);
     raf = requestAnimationFrame(frame);
   });
 
@@ -117,6 +125,7 @@
     ro?.disconnect();
     setGazeOverride(null);
     document.body.style.cursor = '';
+    game?.free();
   });
 </script>
 
@@ -140,8 +149,7 @@
     </div>
   </div>
 
-  <!-- HUD partie -->
-  {#if phase === 'playing'}
+  {#if phase === 1}
     <div class="hud">
       <div class="score">{score.toLocaleString('fr-FR')}</div>
       {#if combo > 1}
@@ -152,9 +160,9 @@
     <div class="hint-play">Passe le laser sur les souris et <b>clique pour bondir</b> 🐾</div>
   {/if}
 
-  <!-- Menu -->
-  {#if phase === 'menu'}
+  {#if phase === 0}
     <div class="overlay">
+      <div class="engine-badge">🦀 moteur Rust · WASM</div>
       <h1>Miaou <span>Pounce</span></h1>
       <p>Guide le laser, fais bondir le chat sur les souris. 60 secondes de chasse !</p>
       <div class="cta">Clique n'importe où pour jouer</div>
@@ -162,8 +170,7 @@
     </div>
   {/if}
 
-  <!-- Résultats -->
-  {#if phase === 'over'}
+  {#if phase === 2}
     <div class="overlay">
       <div class="result-emoji">😻</div>
       <h1>Score : {score.toLocaleString('fr-FR')}</h1>
@@ -192,6 +199,9 @@
         transparent 70%
       ),
       radial-gradient(90% 90% at 50% 120%, var(--bg-2), var(--bg));
+  }
+  .scene :global(*) {
+    cursor: none;
   }
   canvas {
     position: absolute;
@@ -272,6 +282,14 @@
     z-index: 4;
     pointer-events: none;
     background: radial-gradient(circle at 50% 45%, transparent 30%, rgba(6, 6, 14, 0.55));
+  }
+  .engine-badge {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--brand-2);
+    border: 1px solid var(--stroke);
+    padding: 4px 10px;
+    border-radius: 999px;
   }
   .overlay h1 {
     margin: 0;

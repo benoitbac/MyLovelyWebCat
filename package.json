@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "svelte-check --tsconfig ./tsconfig.json && vite build",
+    "build:engine": "wasm-pack build ./engine --target web --out-dir ../src/wasm --out-name miaou_engine --release",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint .",

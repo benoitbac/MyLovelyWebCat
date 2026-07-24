@@ -1,0 +1,34 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_game_free: (a: number, b: number) => void;
+export const game_base: (a: number) => number;
+export const game_best: (a: number) => number;
+export const game_best_combo: (a: number) => number;
+export const game_cat_facing: (a: number) => number;
+export const game_cat_lift: (a: number) => number;
+export const game_cat_squash: (a: number) => number;
+export const game_cat_x: (a: number) => number;
+export const game_combo: (a: number) => number;
+export const game_cursor_x: (a: number) => number;
+export const game_cursor_y: (a: number) => number;
+export const game_load_best: (a: number, b: number) => void;
+export const game_mult: (a: number) => number;
+export const game_new: (a: number) => number;
+export const game_particle_data: (a: number) => [number, number];
+export const game_phase: (a: number) => number;
+export const game_popup_data: (a: number) => [number, number];
+export const game_pounce: (a: number) => void;
+export const game_prey_data: (a: number) => [number, number];
+export const game_resize: (a: number, b: number, c: number) => void;
+export const game_score: (a: number) => number;
+export const game_set_cursor: (a: number, b: number, c: number) => void;
+export const game_shake: (a: number) => number;
+export const game_start: (a: number) => void;
+export const game_take_events: (a: number) => [number, number];
+export const game_time_left: (a: number) => number;
+export const game_trail_data: (a: number) => [number, number];
+export const game_update: (a: number, b: number) => void;
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __wbindgen_start: () => void;
