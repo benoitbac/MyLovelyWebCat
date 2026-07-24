@@ -148,12 +148,65 @@
   </div>
 
   <div class="wall" style="opacity:{warm * 0.5}"></div>
-  <div class="floor"></div>
 
-  <!-- mobilier -->
-  <div class="bowl" title="Gamelle">🥣</div>
-  <div class="bed" title="Panier">🛏️</div>
-  <div class="plant">🪴</div>
+  <!-- cadre au mur -->
+  <div class="furn frame">
+    <svg viewBox="0 0 72 60">
+      <rect
+        x="3"
+        y="3"
+        width="66"
+        height="54"
+        rx="4"
+        fill="#241d3c"
+        stroke="#5a4a86"
+        stroke-width="3"
+      />
+      <circle cx="36" cy="24" r="11" fill="#ffd24a" opacity="0.75" />
+      <path d="M10 52 L26 34 L36 44 L46 30 L62 52 Z" fill="#7b5cff" />
+    </svg>
+  </div>
+
+  <div class="floor"></div>
+  <div class="rug"></div>
+
+  <!-- plante -->
+  <div class="furn plant2">
+    <svg viewBox="0 0 90 130">
+      <ellipse cx="45" cy="124" rx="30" ry="6" fill="#00000033" />
+      <path d="M24 90 H66 L60 124 H30 Z" fill="#c96f4a" />
+      <path d="M24 90 H66 L64 100 H26 Z" fill="#e0865f" />
+      <path d="M45 90 C20 72 18 30 40 20 C45 46 47 70 45 90 Z" fill="#3f9a5a" />
+      <path d="M45 90 C70 70 74 34 52 22 C47 48 47 70 45 90 Z" fill="#4fb56a" />
+      <path d="M45 88 C44 60 44 34 46 24 C47 42 47 66 45 88 Z" fill="#5fc57a" />
+    </svg>
+  </div>
+
+  <!-- gamelles -->
+  <div class="furn bowls">
+    <svg viewBox="0 0 130 60">
+      <ellipse cx="65" cy="52" rx="58" ry="7" fill="#00000033" />
+      <path d="M8 32 a30 15 0 0 0 60 0 Z" fill="#c94f7c" />
+      <ellipse cx="38" cy="32" rx="30" ry="9" fill="#e06a95" />
+      <ellipse cx="38" cy="31" rx="22" ry="6" fill="#8a5a34" />
+      <path d="M72 36 a24 12 0 0 0 48 0 Z" fill="#4a7ec9" />
+      <ellipse cx="96" cy="36" rx="24" ry="7" fill="#6a9ae0" />
+      <ellipse cx="96" cy="35" rx="17" ry="4.5" fill="#bfe0ff" />
+    </svg>
+  </div>
+
+  <!-- arbre à chat -->
+  <div class="furn tree">
+    <svg viewBox="0 0 120 230">
+      <ellipse cx="60" cy="216" rx="48" ry="12" fill="#00000038" />
+      <rect x="28" y="196" width="64" height="20" rx="7" fill="#6b5842" />
+      <rect x="49" y="74" width="22" height="124" fill="#8a7250" />
+      <rect x="49" y="74" width="22" height="124" fill="#000" opacity="0.06" />
+      <rect x="16" y="58" width="88" height="18" rx="9" fill="#6b5842" />
+      <ellipse cx="60" cy="54" rx="42" ry="17" fill="#5b4bd6" />
+      <ellipse cx="60" cy="49" rx="35" ry="13" fill="#9a7bff" />
+    </svg>
+  </div>
 
   <!-- le chat vivant -->
   <button
@@ -268,42 +321,76 @@
     left: 0;
     right: 0;
     bottom: 0;
-    height: 24%;
-    background: linear-gradient(180deg, #34284c, #45355f);
-    box-shadow: inset 0 8px 24px rgba(0, 0, 0, 0.35);
+    height: 26%;
+    background:
+      repeating-linear-gradient(95deg, rgba(0, 0, 0, 0.06) 0 2px, transparent 2px 46px),
+      linear-gradient(180deg, #6b4f36 0%, #7d5c3f 30%, #6a4a30 100%);
+    box-shadow: inset 0 10px 30px rgba(0, 0, 0, 0.45);
   }
   .floor::before {
+    /* plinthe */
     content: '';
     position: absolute;
-    left: 50%;
-    bottom: 8%;
-    transform: translateX(-50%);
-    width: 46%;
-    height: 40%;
-    border-radius: 50%;
-    background: radial-gradient(ellipse, rgba(123, 92, 255, 0.25), transparent 70%);
+    top: -8px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: #4a3a5e;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   }
-  .bowl,
-  .bed,
-  .plant {
+  .rug {
     position: absolute;
+    left: 50%;
+    bottom: 3%;
+    transform: translateX(-50%);
+    width: 52%;
+    height: 15%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, #b98fd6 0%, #9a6fc0 55%, #7d5aa6 70%, transparent 72%);
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.2) inset;
+    opacity: 0.9;
+  }
+  .furn {
+    position: absolute;
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.4));
+  }
+  .furn svg {
+    display: block;
+    height: auto;
+  }
+  .plant2 {
+    left: 6%;
+    bottom: 20%;
+    width: 74px;
+  }
+  .plant2 svg {
+    width: 74px;
+  }
+  .bowls {
+    left: 20%;
     bottom: 15%;
-    font-size: 42px;
-    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
-  }
-  .bowl {
-    left: 18%;
     transform: translateX(-50%);
+    width: 120px;
   }
-  .bed {
+  .bowls svg {
+    width: 120px;
+  }
+  .tree {
     left: 82%;
+    bottom: 15%;
     transform: translateX(-50%);
-    font-size: 48px;
+    width: 130px;
   }
-  .plant {
-    left: 8%;
-    bottom: 22%;
-    font-size: 52px;
+  .tree svg {
+    width: 130px;
+  }
+  .frame {
+    left: 20%;
+    top: 15%;
+    width: 92px;
+  }
+  .frame svg {
+    width: 92px;
   }
 
   .cat-wrap {
