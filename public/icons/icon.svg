@@ -1,0 +1,32 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Miaou">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2b2350"/>
+      <stop offset="100%" stop-color="#0b0a14"/>
+    </linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b9a6ff"/>
+      <stop offset="100%" stop-color="#7b5cff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- ears -->
+  <path d="M168 150 l-14 -70 l78 42 z" fill="url(#fur)"/>
+  <path d="M344 150 l14 -70 l-78 42 z" fill="url(#fur)"/>
+  <path d="M182 138 l-6 -34 l40 22 z" fill="#ff9ecf"/>
+  <path d="M330 138 l6 -34 l-40 22 z" fill="#ff9ecf"/>
+  <!-- head -->
+  <circle cx="256" cy="248" r="132" fill="url(#fur)"/>
+  <!-- eyes -->
+  <ellipse cx="212" cy="238" rx="20" ry="28" fill="#ffd24a"/>
+  <ellipse cx="300" cy="238" rx="20" ry="28" fill="#ffd24a"/>
+  <circle cx="206" cy="228" r="6" fill="#0b0a14"/>
+  <circle cx="294" cy="228" r="6" fill="#0b0a14"/>
+  <!-- nose -->
+  <path d="M248 276 h16 l-8 10 z" fill="#ff9ecf"/>
+  <!-- whiskers -->
+  <g stroke="#efeaff" stroke-width="5" stroke-linecap="round" opacity="0.85">
+    <path d="M150 262 h-52 M152 282 h-56"/>
+    <path d="M362 262 h52 M360 282 h56"/>
+  </g>
+</svg>

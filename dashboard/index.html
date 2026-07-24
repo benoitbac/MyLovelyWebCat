@@ -111,20 +111,20 @@ const PILLAR_LABEL = { 1: "Pilier 1 · Companion", 2: "Pilier 2 · Playroom", 3:
 
 const SPRINTS = [
   {
-    n: 0, title: "Fondations & outillage", pillar: 0, status: "todo",
+    n: 0, title: "Fondations & outillage", pillar: 0, status: "done",
     goal: "Mettre en place la base technique : projet, PWA, rendu, design system et ce dashboard.",
     tasks: [
-      ["Scaffold Vite + TypeScript + Svelte 5", false],
-      ["ESLint + Prettier + config TS stricte", false],
-      ["Bootstrap WebGPU (device, canvas, boucle de rendu)", false],
-      ["Base PWA (manifest + service worker) installable", false],
-      ["Design system : tokens couleurs/typo, thème clair/sombre", false],
-      ["Structure des modules (engine, companion, ui, state…)", false],
-      ["CI GitHub Actions (build + lint)", false],
+      ["Scaffold Vite + TypeScript + Svelte 5", true],
+      ["ESLint + Prettier + config TS stricte", true],
+      ["Bootstrap WebGPU (device, canvas, boucle de rendu)", true],
+      ["Base PWA (manifest + service worker) installable", true],
+      ["Design system : tokens couleurs/typo, thème clair/sombre", true],
+      ["Structure des modules (engine, companion, ui, state…)", true],
+      ["CI GitHub Actions (build + lint)", true],
     ],
   },
   {
-    n: 1, title: "Le compagnon vivant", pillar: 1, status: "todo",
+    n: 1, title: "Le compagnon vivant", pillar: 1, status: "active",
     goal: "Un chat rendu en WebGPU qui bouge, respire, suit la souris et affiche des humeurs de base.",
     tasks: [
       ["Rendu du chat (silhouette charmante + visage)", false],

@@ -1,7 +1,7 @@
 name: 🐛 Bug report
 description: Something isn't working as expected
-title: "[Bug]: "
-labels: ["bug", "triage"]
+title: '[Bug]: '
+labels: ['bug', 'triage']
 body:
   - type: textarea
     id: what-happened
@@ -31,6 +31,6 @@ body:
     id: environment
     attributes:
       label: Environment
-      placeholder: "OS, browser, version…"
+      placeholder: 'OS, browser, version…'
     validations:
       required: false

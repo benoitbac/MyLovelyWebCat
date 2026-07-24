@@ -1,0 +1,32 @@
+/* Design system — jetons partagés (couleurs, rayons, typo). */
+:root {
+  --bg: #0b0a14;
+  --bg-2: #12101f;
+  --surface: #181527;
+  --surface-2: #201b34;
+  --stroke: rgba(150, 130, 255, 0.16);
+  --text: #ece9ff;
+  --muted: #a49dc8;
+
+  --brand: #9a7bff;
+  --brand-2: #66d9ff;
+  --pink: #ff9ecf;
+  --gold: #ffd24a;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --gap: 12px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='light'] {
+  --bg: #f4f2fb;
+  --bg-2: #eae6f8;
+  --surface: #ffffff;
+  --surface-2: #f3f0fc;
+  --stroke: rgba(120, 100, 220, 0.18);
+  --text: #1c1830;
+  --muted: #655f85;
+  --shadow: 0 12px 40px rgba(80, 60, 160, 0.14);
+}

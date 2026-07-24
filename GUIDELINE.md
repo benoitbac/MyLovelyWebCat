@@ -25,6 +25,7 @@ pensé pour devenir une image / un clip partageable sur les réseaux — toujour
 ## 2. Les trois piliers en détail
 
 ### Pilier 1 — Miaou Companion (compagnon de bureau)
+
 - Un chat rendu en **WebGPU**, animé en continu (respiration, regard, réactions souris).
 - **Machine à états / humeurs** : joueur, câlin, endormi, affamé, boudeur…
 - **Besoins qui évoluent dans le temps** (faim, énergie, humeur, propreté) — façon Tamagotchi.
@@ -33,6 +34,7 @@ pensé pour devenir une image / un clip partageable sur les réseaux — toujour
 - **Persistance locale** : il se souvient de son état entre les sessions.
 
 ### Pilier 2 — Miaou Playroom (pour le vrai chat)
+
 - Jeux **plein écran** conçus pour un chat : cibles qui bougent de façon crédible
   (proie, pelote, insecte, laser), avec une vraie « attrapabilité ».
 - **Détection d'interaction** : mouvement/patte via caméra (vision) et/ou tactile.
@@ -40,6 +42,7 @@ pensé pour devenir une image / un clip partageable sur les réseaux — toujour
 - **Bien-être animal d'abord** (voir §6).
 
 ### Pilier 3 — Miaou Home (caméra + contrôle à distance)
+
 - **Filmer** le chat (caméra locale), **flux live** consultable depuis le téléphone.
 - **Parler au chat** (audio bidirectionnel).
 - **Lancer un jeu à distance** (« envoie une pelote »).
@@ -72,15 +75,15 @@ pensé pour devenir une image / un clip partageable sur les réseaux — toujour
 
 Stack retenu (voir arbitrages) :
 
-| Domaine | Choix | Pourquoi |
-| --- | --- | --- |
-| Build / DX | **Vite + TypeScript** | rapide, zéro-config, HMR |
-| UI | **Svelte 5** | runtime minuscule, réactivité fine → fluidité |
-| Rendu chat | **WebGPU** (+ Canvas2D fallback) | performance et style |
-| État / persistance | store Svelte + **IndexedDB** | offline-first |
-| Temps réel | **WebRTC** (getUserMedia, DataChannel) | vidéo/audio/contrôle P2P |
-| Mobile | **PWA** (manifest + service worker) | installable, notifications |
-| Plus tard | **Tauri** (desktop pet natif), **backend** (signaling/relay + comptes), **ESP32** (hardware) | évolutif |
+| Domaine            | Choix                                                                                        | Pourquoi                                      |
+| ------------------ | -------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Build / DX         | **Vite + TypeScript**                                                                        | rapide, zéro-config, HMR                      |
+| UI                 | **Svelte 5**                                                                                 | runtime minuscule, réactivité fine → fluidité |
+| Rendu chat         | **WebGPU** (+ Canvas2D fallback)                                                             | performance et style                          |
+| État / persistance | store Svelte + **IndexedDB**                                                                 | offline-first                                 |
+| Temps réel         | **WebRTC** (getUserMedia, DataChannel)                                                       | vidéo/audio/contrôle P2P                      |
+| Mobile             | **PWA** (manifest + service worker)                                                          | installable, notifications                    |
+| Plus tard          | **Tauri** (desktop pet natif), **backend** (signaling/relay + comptes), **ESP32** (hardware) | évolutif                                      |
 
 > **Tradeoff assumé** : Svelte donne une base plus légère/fluide que React, au prix
 > d'un écosystème un peu plus petit. Les briques temps-réel (WebRTC, média) sont de
@@ -142,17 +145,17 @@ planning/           # notes de sprint
 
 Détail interactif & suivi dans le **[dashboard](dashboard/index.html)**.
 
-| # | Sprint | Pilier | Objectif |
-| --- | --- | --- | --- |
-| 0 | Fondations & outillage | — | Scaffold Vite+TS+Svelte, PWA, WebGPU bootstrap, design system, dashboard, CI |
-| 1 | Le compagnon vivant | 1 | Rendu WebGPU du chat + animation + réactions souris + humeurs de base |
-| 2 | Tamagotchi | 1 | Besoins qui évoluent, actions (caresser/nourrir/jouer), persistance |
-| 3 | ADN cosmétique | 1 | Customisation (couleurs, accessoires, morpho) + déblocables |
-| 4 | Partage social | 1 | Capture image/clip, cartes, liens, export réseaux |
-| 5 | Playroom | 2 | Jeux plein écran pour le vrai chat + capture de moments |
-| 6 | Vision & interaction | 2 | Détection mouvement/patte (caméra), attrapabilité |
-| 7 | Home local | 3 | Appairage téléphone↔maison (WebRTC local), live + audio + jeu à distance |
-| 8 | Cloud & comptes | 3 | Backend signaling/relay, accès distant réel, galerie partagée |
+| #   | Sprint                 | Pilier | Objectif                                                                     |
+| --- | ---------------------- | ------ | ---------------------------------------------------------------------------- |
+| 0   | Fondations & outillage | —      | Scaffold Vite+TS+Svelte, PWA, WebGPU bootstrap, design system, dashboard, CI |
+| 1   | Le compagnon vivant    | 1      | Rendu WebGPU du chat + animation + réactions souris + humeurs de base        |
+| 2   | Tamagotchi             | 1      | Besoins qui évoluent, actions (caresser/nourrir/jouer), persistance          |
+| 3   | ADN cosmétique         | 1      | Customisation (couleurs, accessoires, morpho) + déblocables                  |
+| 4   | Partage social         | 1      | Capture image/clip, cartes, liens, export réseaux                            |
+| 5   | Playroom               | 2      | Jeux plein écran pour le vrai chat + capture de moments                      |
+| 6   | Vision & interaction   | 2      | Détection mouvement/patte (caméra), attrapabilité                            |
+| 7   | Home local             | 3      | Appairage téléphone↔maison (WebRTC local), live + audio + jeu à distance     |
+| 8   | Cloud & comptes        | 3      | Backend signaling/relay, accès distant réel, galerie partagée                |
 
 **Backlog / exploratoire** : Tauri (desktop pet always-on-top), hardware ESP32
 (distributeur de croquettes / jouet connecté), personnalité IA + voix, multi-chats,
