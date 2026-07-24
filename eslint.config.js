@@ -27,6 +27,6 @@ export default ts.config(
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', 'dashboard/', 'public/', '.svelte-kit/'],
+    ignores: ['dist/', 'node_modules/', 'dashboard/', 'public/', '.svelte-kit/', 'src/wasm/'],
   },
 );
