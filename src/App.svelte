@@ -1,33 +1,26 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import CompanionStage from './ui/CompanionStage.svelte';
-  import Dock from './ui/Dock.svelte';
-  import NeedsPanel from './ui/NeedsPanel.svelte';
+  import GameScene from './ui/GameScene.svelte';
   import CustomizationPanel from './ui/CustomizationPanel.svelte';
   import { theme, toggleTheme } from './state/theme';
-  import { fps } from './state/stats';
   import { mood, type Mood } from './companion/mood';
-  import { startNeedsEngine, stopNeedsEngine } from './companion/needs';
   import { startDnaEngine } from './customization/dna';
   import { startCompanionLoop, stopCompanionLoop } from './companion/loop';
+  import { muted } from './game/sound';
 
   let showCustomize = $state(false);
 
   onMount(() => {
-    void startNeedsEngine();
     void startDnaEngine();
     startCompanionLoop();
   });
-  onDestroy(() => {
-    stopNeedsEngine();
-    stopCompanionLoop();
-  });
+  onDestroy(() => stopCompanionLoop());
 
   const MOOD_LABEL: Record<Mood, string> = {
-    content: '😺 content',
-    playful: '😸 joueur',
-    sleepy: '😴 endormi',
-    happy: '😻 heureux',
+    content: '😺',
+    playful: '😸',
+    sleepy: '😴',
+    happy: '😻',
   };
 </script>
 
@@ -36,11 +29,18 @@
     <div class="brand">
       <span class="logo">🐱</span>
       <b>Miaou</b>
-      <span class="tag">companion</span>
+      <span class="tag">Pounce</span>
     </div>
     <div class="meta">
       <span class="mood" title="Humeur du compagnon">{MOOD_LABEL[$mood]}</span>
-      <span class="fps" title="Images par seconde">{$fps} FPS</span>
+      <button
+        class="icon"
+        onclick={() => muted.update((m) => !m)}
+        title="Son"
+        aria-label="Activer/couper le son"
+      >
+        {$muted ? '🔇' : '🔊'}
+      </button>
       <button
         class="icon"
         onclick={() => (showCustomize = !showCustomize)}
@@ -60,12 +60,10 @@
     </div>
   </header>
 
-  <CompanionStage />
-  <NeedsPanel />
+  <GameScene />
   {#if showCustomize}
     <CustomizationPanel onClose={() => (showCustomize = false)} />
   {/if}
-  <Dock />
 </main>
 
 <style>
@@ -82,7 +80,7 @@
     border-bottom: 1px solid var(--stroke);
     background: color-mix(in srgb, var(--surface) 70%, transparent);
     backdrop-filter: blur(14px);
-    z-index: 2;
+    z-index: 5;
   }
   .brand {
     display: flex;
@@ -105,20 +103,10 @@
   .meta {
     display: flex;
     align-items: center;
-    gap: 12px;
-  }
-  .fps {
-    font-variant-numeric: tabular-nums;
-    font-size: 12px;
-    color: var(--muted);
+    gap: 10px;
   }
   .mood {
-    font-size: 12px;
-    color: var(--text);
-    background: var(--surface-2);
-    border: 1px solid var(--stroke);
-    border-radius: 999px;
-    padding: 3px 10px;
+    font-size: 15px;
   }
   .icon {
     background: var(--surface-2);

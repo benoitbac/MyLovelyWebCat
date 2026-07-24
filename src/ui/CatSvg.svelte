@@ -2,6 +2,8 @@
   import { dna } from '../customization/dna';
   import { expression, gaze } from '../companion/loop';
 
+  let { size = 300 }: { size?: number } = $props();
+
   // Décalage du regard (en unités du viewBox).
   const gx = $derived($gaze.x * 7);
   const gy = $derived($gaze.y * 5);
@@ -22,7 +24,7 @@
   class="cat"
   viewBox="0 0 320 372"
   xmlns="http://www.w3.org/2000/svg"
-  style="--furA:{$dna.furA}; --furB:{$dna.furB}; --belly:{$dna.belly}; --eye:{$dna.eye}; --accent:{$dna.accent};"
+  style="width:{size}px; --furA:{$dna.furA}; --furB:{$dna.furB}; --belly:{$dna.belly}; --eye:{$dna.eye}; --accent:{$dna.accent};"
   role="img"
   aria-label="Compagnon chat"
 >
