@@ -36,11 +36,36 @@ export class Game {
     readonly time_left: number;
 }
 
+export class Life {
+    free(): void;
+    [Symbol.dispose](): void;
+    clean(): void;
+    cuddle(): void;
+    feed(): void;
+    load(hunger: number, energy: number, joy: number, hygiene: number, coins: number): void;
+    constructor(seed: number);
+    resize(w: number): void;
+    reward(coins: number, joy: number): void;
+    toy(): void;
+    update(dt: number): void;
+    readonly bob: number;
+    readonly clock: number;
+    readonly coins: number;
+    readonly energy: number;
+    readonly facing: number;
+    readonly hunger: number;
+    readonly hygiene: number;
+    readonly joy: number;
+    readonly state: number;
+    readonly x: number;
+}
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_game_free: (a: number, b: number) => void;
+    readonly __wbg_life_free: (a: number, b: number) => void;
     readonly game_base: (a: number) => number;
     readonly game_best: (a: number) => number;
     readonly game_best_combo: (a: number) => number;
@@ -68,6 +93,25 @@ export interface InitOutput {
     readonly game_time_left: (a: number) => number;
     readonly game_trail_data: (a: number) => [number, number];
     readonly game_update: (a: number, b: number) => void;
+    readonly life_bob: (a: number) => number;
+    readonly life_clean: (a: number) => void;
+    readonly life_clock: (a: number) => number;
+    readonly life_coins: (a: number) => number;
+    readonly life_cuddle: (a: number) => void;
+    readonly life_energy: (a: number) => number;
+    readonly life_facing: (a: number) => number;
+    readonly life_feed: (a: number) => void;
+    readonly life_hunger: (a: number) => number;
+    readonly life_hygiene: (a: number) => number;
+    readonly life_joy: (a: number) => number;
+    readonly life_load: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+    readonly life_new: (a: number) => number;
+    readonly life_resize: (a: number, b: number) => void;
+    readonly life_reward: (a: number, b: number, c: number) => void;
+    readonly life_state: (a: number) => number;
+    readonly life_toy: (a: number) => void;
+    readonly life_update: (a: number, b: number) => void;
+    readonly life_x: (a: number) => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_start: () => void;

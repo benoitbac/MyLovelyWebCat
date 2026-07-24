@@ -205,6 +205,140 @@ export class Game {
     }
 }
 if (Symbol.dispose) Game.prototype[Symbol.dispose] = Game.prototype.free;
+
+export class Life {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        LifeFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_life_free(ptr, 0);
+    }
+    /**
+     * @returns {number}
+     */
+    get bob() {
+        const ret = wasm.life_bob(this.__wbg_ptr);
+        return ret;
+    }
+    clean() {
+        wasm.life_clean(this.__wbg_ptr);
+    }
+    /**
+     * @returns {number}
+     */
+    get clock() {
+        const ret = wasm.life_clock(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get coins() {
+        const ret = wasm.life_coins(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    cuddle() {
+        wasm.life_cuddle(this.__wbg_ptr);
+    }
+    /**
+     * @returns {number}
+     */
+    get energy() {
+        const ret = wasm.life_energy(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get facing() {
+        const ret = wasm.life_facing(this.__wbg_ptr);
+        return ret;
+    }
+    feed() {
+        wasm.life_feed(this.__wbg_ptr);
+    }
+    /**
+     * @returns {number}
+     */
+    get hunger() {
+        const ret = wasm.life_hunger(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get hygiene() {
+        const ret = wasm.life_hygiene(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {number}
+     */
+    get joy() {
+        const ret = wasm.life_joy(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @param {number} hunger
+     * @param {number} energy
+     * @param {number} joy
+     * @param {number} hygiene
+     * @param {number} coins
+     */
+    load(hunger, energy, joy, hygiene, coins) {
+        wasm.life_load(this.__wbg_ptr, hunger, energy, joy, hygiene, coins);
+    }
+    /**
+     * @param {number} seed
+     */
+    constructor(seed) {
+        const ret = wasm.life_new(seed);
+        this.__wbg_ptr = ret;
+        LifeFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * @param {number} w
+     */
+    resize(w) {
+        wasm.life_resize(this.__wbg_ptr, w);
+    }
+    /**
+     * @param {number} coins
+     * @param {number} joy
+     */
+    reward(coins, joy) {
+        wasm.life_reward(this.__wbg_ptr, coins, joy);
+    }
+    /**
+     * @returns {number}
+     */
+    get state() {
+        const ret = wasm.life_state(this.__wbg_ptr);
+        return ret;
+    }
+    toy() {
+        wasm.life_toy(this.__wbg_ptr);
+    }
+    /**
+     * @param {number} dt
+     */
+    update(dt) {
+        wasm.life_update(this.__wbg_ptr, dt);
+    }
+    /**
+     * @returns {number}
+     */
+    get x() {
+        const ret = wasm.life_x(this.__wbg_ptr);
+        return ret;
+    }
+}
+if (Symbol.dispose) Life.prototype[Symbol.dispose] = Life.prototype.free;
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -230,6 +364,9 @@ function __wbg_get_imports() {
 const GameFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_game_free(ptr, 1));
+const LifeFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_life_free(ptr, 1));
 
 function getArrayF32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
