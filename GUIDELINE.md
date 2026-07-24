@@ -149,17 +149,22 @@ dans `server/` pour le backend.
 
 Détail interactif & suivi dans le **[dashboard](dashboard/index.html)**.
 
-**Sprint 1 = « game of life de chat, multi, avec jeux »** (la belle step 1).
-Fondations posées : moteur **Rust/WASM**, backend **.NET/SignalR**, shell **Svelte**.
+**Vision = « GTA-like félin » / game of life new-gen** : on personnifie son avatar
+en **3D**, il vit dans un **monde 3D où l'on se balade**, avec de vrais jeux, en
+**multijoueur**. Stack : **Three.js/WebGL(→WebGPU)** pour le 3D, **Rust/WASM** pour
+la simulation, **.NET 9/SignalR** pour le multi, **Svelte/TS** pour l'orchestration.
 
-| Lot | Contenu                                                                              | Stack             | État |
-| --- | ------------------------------------------------------------------------------------ | ----------------- | ---- |
-| 1a  | **Fondations stack** : moteur Rust→WASM + backend .NET (health/scores/SignalR) + web | Rust · .NET · TS  | ✅   |
-| 1b  | **Création du chat (type GTA)** : couleurs, morpho, accessoires, nom — à l'entrée    | Svelte · ADN      | ⏳   |
-| 1c  | **Le chat vit (game of life)** : besoins, humeurs, vie autonome, soins, économie     | Svelte · WASM     | ⏳   |
-| 1d  | **Vrais jeux** : Miaou Pounce (fait) + 2-3 autres bien faits, bonus, déblocables     | Rust/WASM         | 🟡   |
-| 1e  | **Multijoueur bureau** : arène SignalR (voir jouer, scores live, classements)        | .NET/SignalR · TS | ⏳   |
-| 1f  | **Partage social** : cartes de score/chat, liens, export réseaux                     | Svelte · .NET     | ⏳   |
+| Lot | Contenu                                                                            | Stack                | État  |
+| --- | ---------------------------------------------------------------------------------- | -------------------- | ----- |
+| A   | **Fondations stack** : moteur Rust→WASM + backend .NET (SignalR) + web             | Rust · .NET · TS     | ✅    |
+| B   | **Créateur 3D (avatar façon GTA)** : chat 3D tournable, robes, morpho, accessoires | Three.js             | ✅    |
+| C   | **Monde 3D balade** : scène 3D, ton chat 3D dedans, caméra qui suit, jour/nuit     | Three.js             | ⏳ ⭐ |
+| D   | **Game of life dans le monde** : besoins, IA autonome (Rust), soins, économie, PNJ | Rust/WASM · Three.js | ⏳    |
+| E   | **Vrais jeux** intégrés au monde (Pounce fait + autres), bonus, déblocables        | Rust/WASM            | 🟡    |
+| F   | **Multijoueur** : autres chats (collègues) dans le monde, temps réel               | .NET/SignalR         | ⏳    |
+| G   | **Partage social** : captures, cartes, liens                                       | Svelte · .NET        | ⏳    |
 
-**Après la step 1** : pilier « vrai chat » (caméra/WebRTC), comptes cloud & sauvegarde,
-appli mobile (PWA/Tauri), hardware (ESP32), personnalité IA.
+⭐ Prochaine brique. **Choix du monde** (Terre, Lune, appart…) à l'entrée du monde.
+
+**Après** : rendu **WebGPU** (Three.js WebGPURenderer), comptes cloud & sauvegarde,
+mobile (PWA/Tauri), pilier « vrai chat » (caméra/WebRTC), personnalité IA.
