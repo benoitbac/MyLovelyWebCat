@@ -53,9 +53,10 @@ fn main(@builtin(global_invocation_id) gid : vec3u) {
   // --- Force de rappel élastique vers la position cible (ce qui "tient" le chat).
   var accel = (home - p.pos) * 55.0;
 
-  // --- Scintillement organique (plus fort au repos) pour éviter l'effet figé.
+  // --- Léger frémissement (plus présent au repos) pour éviter l'effet figé,
+  //     volontairement discret pour garder une silhouette lisible.
   accel += vec2f(sin(t * 1.3 + p.seed * 7.0),
-                 cos(t * 1.1 + p.seed * 5.0)) * (0.4 + u.params2.w * 0.8);
+                 cos(t * 1.1 + p.seed * 5.0)) * (0.12 + u.params2.w * 0.35);
 
   // --- Interaction souris : aimant (attire) ou timide (repousse).
   if (u.mouseActive > 0.5) {
