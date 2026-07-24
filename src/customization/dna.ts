@@ -4,6 +4,8 @@
 import { writable, get } from 'svelte/store';
 import { kvGet, kvSet } from '../state/db';
 
+export type HatKind = 'none' | 'tophat' | 'cap' | 'crown' | 'party';
+
 export interface DNA {
   furA: string; // pelage (haut)
   furB: string; // pelage (bas)
@@ -12,17 +14,38 @@ export interface DNA {
   accent: string; // rose (oreilles internes, nez, joues)
   earSize: number; // 0.6 .. 1.4
   roundness: number; // -1 .. 1
+  bodySize: number; // 0.75 .. 1.35 (corpulence)
+  noseSize: number; // 0.6 .. 1.6 (truffe)
+  hat: HatKind;
+  collar: boolean;
+  glasses: boolean;
 }
 
 export const DEFAULT_DNA: DNA = {
-  furA: '#b9a6ff',
-  furB: '#7b5cff',
-  belly: '#efeaff',
-  eye: '#ffd24a',
+  furA: '#c99a6a',
+  furB: '#a9764a',
+  belly: '#f0e2cf',
+  eye: '#7bd88f',
   accent: '#ff9ecf',
   earSize: 1.0,
   roundness: 0.0,
+  bodySize: 1.0,
+  noseSize: 1.0,
+  hat: 'none',
+  collar: false,
+  glasses: false,
 };
+
+/** Robes de pelage prêtes à l'emploi (clair, foncé, ventre). */
+export const FUR_PRESETS: { name: string; furA: string; furB: string; belly: string }[] = [
+  { name: 'Brun', furA: '#c99a6a', furB: '#a9764a', belly: '#f0e2cf' },
+  { name: 'Roux', furA: '#f0a860', furB: '#e07b3a', belly: '#fbe6cf' },
+  { name: 'Noir', furA: '#4a4658', furB: '#2c2836', belly: '#6b6678' },
+  { name: 'Blanc', furA: '#ffffff', furB: '#e6e2f0', belly: '#ffffff' },
+  { name: 'Gris', furA: '#b9b6c8', furB: '#8d8aa0', belly: '#e6e4ef' },
+  { name: 'Crème', furA: '#f5e6c8', furB: '#e6cfa0', belly: '#fff6e6' },
+  { name: 'Lavande', furA: '#b9a6ff', furB: '#7b5cff', belly: '#efeaff' },
+];
 
 const KEY = 'dna';
 
@@ -76,15 +99,26 @@ export function randomizeDNA(): void {
     Math.floor(Math.random() * 0xffffff)
       .toString(16)
       .padStart(6, '0');
+  const preset = FUR_PRESETS[Math.floor(Math.random() * FUR_PRESETS.length)];
+  const hats: HatKind[] = ['none', 'none', 'tophat', 'cap', 'crown', 'party'];
   dna.set({
-    furA: rc(),
-    furB: rc(),
-    belly: rc(),
+    furA: preset.furA,
+    furB: preset.furB,
+    belly: preset.belly,
     eye: rc(),
     accent: rc(),
-    earSize: Number((0.8 + Math.random() * 0.5).toFixed(2)),
+    earSize: Number((0.75 + Math.random() * 0.6).toFixed(2)),
     roundness: Number((Math.random() * 2 - 1).toFixed(2)),
+    bodySize: Number((0.8 + Math.random() * 0.5).toFixed(2)),
+    noseSize: Number((0.7 + Math.random() * 0.8).toFixed(2)),
+    hat: hats[Math.floor(Math.random() * hats.length)],
+    collar: Math.random() < 0.5,
+    glasses: Math.random() < 0.35,
   });
+}
+
+export function applyFurPreset(p: { furA: string; furB: string; belly: string }): void {
+  dna.update((d) => ({ ...d, furA: p.furA, furB: p.furB, belly: p.belly }));
 }
 
 export function resetDNA(): void {
