@@ -4,6 +4,9 @@
 
 use wasm_bindgen::prelude::*;
 
+mod life;
+pub use life::Life;
+
 const ROUND_TIME: f32 = 60.0;
 
 #[inline]

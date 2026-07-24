@@ -1,11 +1,29 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import CatSvg from './CatSvg.svelte';
-  import init, { Game } from '../wasm/miaou_engine';
+  import { Game } from '../wasm/miaou_engine';
+  import { ready } from '../game/wasm';
   import { draw } from '../game/render';
   import { sndCatch, sndGolden, sndPounce, sndOver, resumeAudio } from '../game/sound';
-  import { setGazeOverride, play, pet } from '../companion/loop';
+  import {
+    setGazeOverride,
+    play,
+    pet,
+    startCompanionLoop,
+    stopCompanionLoop,
+  } from '../companion/loop';
   import { kvGet, kvSet } from '../state/db';
+  import { go, addCoins } from '../state/app';
+
+  let earned = $state(0);
+
+  async function rewardLife(bonusJoy: number) {
+    const l = await kvGet<{ hunger: number; energy: number; joy: number; hygiene: number }>('life');
+    if (l) {
+      l.joy = Math.max(0, Math.min(100, l.joy + bonusJoy));
+      await kvSet('life', l);
+    }
+  }
 
   let host!: HTMLDivElement;
   let canvas!: HTMLCanvasElement;
@@ -82,6 +100,10 @@
         } else if (code === 3) {
           sndOver();
           void kvSet('bestScore', game.best);
+          const coins = Math.floor(game.score / 40);
+          earned = coins;
+          addCoins(coins);
+          void rewardLife(Math.min(30, game.score / 200));
         }
       }
 
@@ -109,8 +131,9 @@
 
   onMount(async () => {
     ctx = canvas.getContext('2d');
-    await init();
+    await ready();
     game = new Game((Math.floor(Math.random() * 4294967295) + 1) >>> 0);
+    startCompanionLoop();
     ro = new ResizeObserver(resize);
     ro.observe(host);
     resize();
@@ -124,6 +147,7 @@
     cancelAnimationFrame(raf);
     ro?.disconnect();
     setGazeOverride(null);
+    stopCompanionLoop();
     document.body.style.cursor = '';
     game?.free();
   });
@@ -139,6 +163,14 @@
   tabindex="-1"
 >
   <canvas bind:this={canvas}></canvas>
+
+  <button
+    class="back"
+    onpointerdown={(e) => {
+      e.stopPropagation();
+      go('home');
+    }}>← Salon</button
+  >
 
   <div class="cat-wrap" style="transform: translate({catX}px, {catBaseY - catLift}px)">
     <div
@@ -179,7 +211,8 @@
           'fr-FR',
         )}
       </p>
-      <div class="cta">Clique pour rejouer</div>
+      {#if earned > 0}<div class="earned">+{earned.toLocaleString('fr-FR')} 🪙</div>{/if}
+      <div class="cta">Clique pour rejouer · <b>← Salon</b> pour rentrer</div>
     </div>
   {/if}
 </div>
@@ -321,6 +354,26 @@
   }
   .result-emoji {
     font-size: 60px;
+  }
+  .earned {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--gold);
+  }
+  .back {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 6;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(15, 12, 30, 0.6);
+    border: 1px solid var(--stroke);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
   }
   @keyframes bob {
     50% {
