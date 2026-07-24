@@ -49,7 +49,7 @@ function buildUniforms(now, dt) {
   const [ar, ag, ab] = hexToRGB(dna.accent);
   const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
 
-  const sizeBase = { low: 4.4, medium: 3.1, high: 2.4 }[dna.density] ?? 3.1;
+  const sizeBase = { low: 5.4, medium: 4.1, high: 3.1 }[dna.density] ?? 4.1;
   const rippleAge = (now - state.ripple.t0);
 
   U[0] = canvas.width; U[1] = canvas.height;
@@ -57,14 +57,14 @@ function buildUniforms(now, dt) {
   U[4] = now; U[5] = dt;
   U[6] = state.mouseActive; U[7] = dna.behavior === 'shy' ? 1 : 0;
   U[8] = pr; U[9] = pg; U[10] = pb; U[11] = 1;
-  U[12] = nr * 1.5; U[13] = ng * 1.5; U[14] = nb * 1.5; U[15] = 1;   // néon boosté (HDR)
-  U[16] = ar * 1.4; U[17] = ag * 1.4; U[18] = ab * 1.4; U[19] = 1;
-  U[20] = 0.012 + idle * 0.022;              // breatheAmp
-  U[21] = 1.1 - idle * 0.5;                   // breatheSpeed
+  U[12] = nr * 1.1; U[13] = ng * 1.1; U[14] = nb * 1.1; U[15] = 1;
+  U[16] = ar * 1.25; U[17] = ag * 1.25; U[18] = ab * 1.25; U[19] = 1;
+  U[20] = 0.009 + idle * 0.016;              // breatheAmp (plus subtil)
+  U[21] = 1.0 - idle * 0.45;                  // breatheSpeed
   U[22] = 0.80 + dna.trail * 0.17;            // trailDecay
-  U[23] = 0.45 + dna.glow * 1.05;             // glow
+  U[23] = 0.30 + dna.glow * 0.65;             // glow (calmé)
   U[24] = 0.5;                                // mouseRadius (monde)
-  U[25] = dna.behavior === 'shy' ? 85 : 48;   // mouseStrength
+  U[25] = dna.behavior === 'shy' ? 70 : 40;   // mouseStrength
   U[26] = sizeBase * dpr;                     // sizePx
   U[27] = idle;                               // idle factor
   U[28] = state.ripple.x; U[29] = state.ripple.y;

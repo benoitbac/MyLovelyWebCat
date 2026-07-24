@@ -47,18 +47,18 @@ fn fs(in : VO) -> @location(0) vec4f {
   let uv   = in.uv;
   let glow = textureSample(tex, samp, uv).rgb;
 
-  // Fond : dégradé profond + grille néon discrète.
-  var bg = mix(vec3f(0.04, 0.03, 0.09), vec3f(0.008, 0.01, 0.028), uv.y);
+  // Fond : dégradé profond + grille néon très discrète.
+  var bg = mix(vec3f(0.035, 0.028, 0.075), vec3f(0.006, 0.008, 0.022), uv.y);
   let cell = abs(fract(uv * u.resolution / 46.0) - 0.5);
-  let grid = smoothstep(0.47, 0.5, max(cell.x, cell.y)) * 0.025;
+  let grid = smoothstep(0.47, 0.5, max(cell.x, cell.y)) * 0.010;
   bg += vec3f(grid) * vec3f(0.35, 0.55, 0.95);
 
   var col = bg + glow;
-  col = aces(col * 1.18);
+  col = aces(col * 1.05);
 
-  // Vignette douce pour concentrer le regard.
-  let v = smoothstep(1.15, 0.35, length(uv - 0.5));
-  col *= mix(0.68, 1.0, v);
+  // Vignette douce pour concentrer le regard sur le chat.
+  let v = smoothstep(1.15, 0.30, length(uv - 0.5));
+  col *= mix(0.55, 1.0, v);
 
   return vec4f(col, 1.0);
 }

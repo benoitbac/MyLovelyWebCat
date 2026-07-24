@@ -5,13 +5,13 @@
 
 export const DEFAULT_DNA = {
   v: 1,
-  primary: '#7b5cff',   // pelage
-  neon: '#00e5ff',      // glow / traînée
-  accent: '#39ff14',    // yeux + chapeau
+  primary: '#9a7bff',   // pelage (lavande douce)
+  neon: '#66d9ff',      // glow / traînée
+  accent: '#ffd24a',    // yeux (doré — regard de chat)
   behavior: 'magnet',   // 'magnet' (suit) | 'shy' (fuit)
   hat: false,           // chapeau cyberpunk
-  trail: 0.55,          // longueur de la traînée [0..1]
-  glow: 0.85,           // intensité lumineuse [0..1]
+  trail: 0.38,          // longueur de la traînée [0..1]
+  glow: 0.7,            // intensité lumineuse [0..1]
   density: 'medium',    // 'low' | 'medium' | 'high'
 };
 

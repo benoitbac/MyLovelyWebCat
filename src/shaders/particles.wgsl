@@ -59,25 +59,35 @@ fn vs(@builtin(vertex_index) vi : u32,
   var size = u.params2.z;              // rayon du sprite EN PIXELS
   var glow = u.params.w;
   var col  = u.primary.rgb;
+  let k = p.kind;
 
-  if (p.kind > 1.5) {
-    // Accessoire (chapeau cyberpunk) → couleur néon.
+  if (k > 4.5) {
+    // 5 = remplissage interne : doux et discret, ne "crame" pas la silhouette.
+    col  = u.primary.rgb * 0.9;
+    glow = glow * 0.42;
+    size = size * 1.15;
+  } else if (k > 3.5) {
+    // 4 = moustaches / bouche : traits fins et clairs.
+    col  = vec3f(1.0, 0.96, 0.98);
+    glow = glow * 0.5;
+    size = size * 0.68;
+  } else if (k > 2.5) {
+    // 3 = rose : oreilles internes, museau, joues.
+    col  = vec3f(1.0, 0.52, 0.72);
+    glow = glow * 0.85;
+  } else if (k > 1.5) {
+    // 2 = chapeau cyberpunk → néon.
     col  = u.neon.rgb;
-    size = size * 0.9;
-    glow = glow * 1.15;
-  } else if (p.kind > 0.5) {
-    // Yeux → couleur d'accent, plus gros, avec clignement périodique.
+  } else if (k > 0.5) {
+    // 1 = yeux → accent brillant, avec clignement périodique.
     col  = u.accent.rgb;
-    size = size * 2.4;
-    let ph    = fract(u.time * 0.2 + 0.35);
-    let blink = select(1.0, 0.12, ph > 0.955);   // ferme les yeux ~5% du temps
-    size = size * blink;
-    glow = glow * 1.7;
+    glow = glow * 1.6;
+    size = size * 1.1;
+    let ph = fract(u.time * 0.18 + 0.4);
+    size = size * select(1.0, 0.12, ph > 0.955);
   } else {
-    // Corps → dégradé principal → néon selon la vitesse (les zones qui
-    // bougent s'illuminent) et un peu de variété via la graine.
-    let speed = clamp(length(p.vel) * 0.16, 0.0, 1.0);
-    col = mix(u.primary.rgb, u.neon.rgb, 0.30 + speed * 0.5 + 0.15 * sin(p.seed * 9.0));
+    // 0 = contour (pelage), net : c'est lui qui dessine le chat.
+    col = u.primary.rgb;
   }
 
   // Centre projeté en clip, puis décalage du coin exprimé en pixels
