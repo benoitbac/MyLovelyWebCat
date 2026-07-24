@@ -188,6 +188,14 @@
     scene.add(cat.group);
     unsub = dna.subscribe((d) => cat?.update(d)); // fire immédiat = update initial
 
+    // Charge un vrai modèle 3D animé (CC0) par défaut, au lieu de la géométrie.
+    new GLTFLoader().load(
+      '/models/animal.glb',
+      (g) => placeModel(g.scene, g.animations),
+      undefined,
+      (e) => console.warn('modèle par défaut indisponible', e),
+    );
+
     ro = new ResizeObserver(resize);
     ro.observe(host);
     resize();

@@ -1,7 +1,7 @@
 // État applicatif : navigation entre écrans + profil du joueur (nom, création,
 // monnaie), persisté localement.
 
-import { writable, get } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { kvGet, kvSet } from './db';
 
 export type Screen = 'create' | 'home' | 'game';
@@ -22,7 +22,8 @@ export async function startApp(): Promise<void> {
   const saved = await kvGet<Profile>('profile');
   if (saved) profile.set({ ...DEFAULT, ...saved });
   profile.subscribe((p) => void kvSet('profile', p));
-  screen.set(get(profile).created ? 'home' : 'create');
+  // On démarre toujours sur le créateur pour l'instant (menu à venir).
+  screen.set('create');
 }
 
 export function go(s: Screen): void {
