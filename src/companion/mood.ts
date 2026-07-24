@@ -33,13 +33,18 @@ export class MoodController {
   private current: Mood = 'content';
   private idle = 0;
   private happyTimer = 0;
+  private playTimer = 0;
 
   update(dt: number, opts: { mouseActive: boolean; mouseSpeed: number }): Expression {
-    // 1) Choix de l'humeur cible.
+    // 1) Choix de l'humeur cible (les impulsions d'action ont la priorité).
     let next: Mood;
     if (this.happyTimer > 0) {
       this.happyTimer -= dt;
       next = 'happy';
+    } else if (this.playTimer > 0) {
+      this.playTimer -= dt;
+      this.idle = 0;
+      next = 'playful';
     } else if (opts.mouseActive && opts.mouseSpeed > 0.15) {
       this.idle = 0;
       next = 'playful';
@@ -67,5 +72,10 @@ export class MoodController {
   /** Caresse : bascule en humeur « heureux » pour un court instant. */
   pet(): void {
     this.happyTimer = PET_DURATION;
+  }
+
+  /** Jeu : bascule en humeur « joueur » pour un court instant. */
+  play(): void {
+    this.playTimer = 2.5;
   }
 }

@@ -95,6 +95,12 @@ export class Renderer {
     this.mood.pet();
   }
 
+  /** Réaction visuelle à une action du dock. */
+  react(kind: 'pet' | 'feed' | 'play' | 'groom'): void {
+    if (kind === 'play') this.mood.play();
+    else this.mood.pet();
+  }
+
   private resize(): void {
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     const w = Math.max(1, Math.floor(this.canvas.clientWidth * dpr));
