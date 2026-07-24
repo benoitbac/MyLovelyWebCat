@@ -1,50 +1,43 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { Renderer } from '../engine/renderer';
-  import { setRenderer } from '../companion/companion';
+  import CatSvg from './CatSvg.svelte';
+  import { setPointer, clearPointer, pet } from '../companion/loop';
 
-  let canvas!: HTMLCanvasElement;
-  let error = $state<string | null>(null);
-  let renderer: Renderer | null = null;
+  let stage!: HTMLDivElement;
 
-  onMount(async () => {
-    try {
-      renderer = await Renderer.create(canvas);
-      setRenderer(renderer);
-    } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
-    }
-  });
-
-  onDestroy(() => {
-    setRenderer(null);
-    renderer?.dispose();
-  });
+  function toNorm(e: PointerEvent) {
+    const r = stage.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height * 0.42;
+    const nx = (e.clientX - cx) / (r.width * 0.5);
+    const ny = (e.clientY - cy) / (r.height * 0.5);
+    return { x: Math.max(-1, Math.min(1, nx)), y: Math.max(-1, Math.min(1, ny)) };
+  }
 
   function onMove(e: PointerEvent) {
-    renderer?.setPointer(e.clientX, e.clientY, true);
+    const n = toNorm(e);
+    setPointer(n.x, n.y, true);
   }
   function onLeave() {
-    renderer?.clearPointer();
+    clearPointer();
   }
   function onDown(e: PointerEvent) {
-    renderer?.setPointer(e.clientX, e.clientY, true);
-    renderer?.pet(); // caresser au clic
+    const n = toNorm(e);
+    setPointer(n.x, n.y, true);
+    pet();
   }
 </script>
 
-<div class="stage">
-  <canvas bind:this={canvas} onpointermove={onMove} onpointerleave={onLeave} onpointerdown={onDown}
-  ></canvas>
-
-  {#if error}
-    <div class="fallback" role="alert">
-      <div class="emoji">😿</div>
-      <h2>WebGPU indisponible</h2>
-      <p>{error}</p>
-      <p class="hint">Essaie Chrome ou Edge 113+, ou active WebGPU dans les options.</p>
-    </div>
-  {/if}
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="stage"
+  bind:this={stage}
+  onpointermove={onMove}
+  onpointerleave={onLeave}
+  onpointerdown={onDown}
+>
+  <div class="bg"></div>
+  <div class="glow"></div>
+  <CatSvg />
 </div>
 
 <style>
@@ -52,35 +45,48 @@
     position: relative;
     flex: 1;
     min-height: 0;
-  }
-  canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-    cursor: pointer;
-  }
-  .fallback {
-    position: absolute;
-    inset: 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    gap: 6px;
-    padding: 24px;
-    color: var(--muted);
+    overflow: hidden;
+    cursor: pointer;
   }
-  .emoji {
-    font-size: 48px;
+  .bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        60% 50% at 50% 38%,
+        color-mix(in srgb, var(--brand) 22%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(80% 80% at 50% 120%, var(--bg-2), var(--bg));
+    z-index: 0;
   }
-  .fallback h2 {
-    margin: 6px 0 0;
-    color: var(--text);
+  .glow {
+    position: absolute;
+    width: 60vmin;
+    height: 60vmin;
+    top: 42%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--brand) 30%, transparent),
+      transparent 62%
+    );
+    filter: blur(30px);
+    z-index: 0;
+    animation: pulse 6s ease-in-out infinite;
   }
-  .hint {
-    font-size: 13px;
-    opacity: 0.8;
+  :global(.cat) {
+    position: relative;
+    z-index: 1;
+  }
+  @keyframes pulse {
+    50% {
+      transform: translate(-50%, -50%) scale(1.08);
+      opacity: 0.85;
+    }
   }
 </style>
