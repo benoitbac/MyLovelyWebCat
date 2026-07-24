@@ -3,12 +3,19 @@
   import CompanionStage from './ui/CompanionStage.svelte';
   import Dock from './ui/Dock.svelte';
   import NeedsPanel from './ui/NeedsPanel.svelte';
+  import CustomizationPanel from './ui/CustomizationPanel.svelte';
   import { theme, toggleTheme } from './state/theme';
   import { fps } from './state/stats';
   import { mood, type Mood } from './companion/mood';
   import { startNeedsEngine, stopNeedsEngine } from './companion/needs';
+  import { startDnaEngine } from './customization/dna';
 
-  onMount(() => void startNeedsEngine());
+  let showCustomize = $state(false);
+
+  onMount(() => {
+    void startNeedsEngine();
+    void startDnaEngine();
+  });
   onDestroy(() => stopNeedsEngine());
 
   const MOOD_LABEL: Record<Mood, string> = {
@@ -31,6 +38,14 @@
       <span class="fps" title="Images par seconde">{$fps} FPS</span>
       <button
         class="icon"
+        onclick={() => (showCustomize = !showCustomize)}
+        title="Personnaliser"
+        aria-label="Personnaliser"
+      >
+        🎨
+      </button>
+      <button
+        class="icon"
         onclick={toggleTheme}
         title="Changer de thème"
         aria-label="Changer de thème"
@@ -42,6 +57,9 @@
 
   <CompanionStage />
   <NeedsPanel />
+  {#if showCustomize}
+    <CustomizationPanel onClose={() => (showCustomize = false)} />
+  {/if}
   <Dock />
 </main>
 

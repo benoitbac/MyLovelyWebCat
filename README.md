@@ -12,7 +12,7 @@ Trois couches, un même chat :
 [![License: MIT](https://img.shields.io/badge/License-MIT-8b7bf5.svg)](LICENSE)
 ![WebGPU](https://img.shields.io/badge/WebGPU-rendering-66d9ff.svg)
 ![Stack](https://img.shields.io/badge/Vite%20·%20TS%20·%20Svelte-9a7bff.svg)
-![Status](https://img.shields.io/badge/status-planning-ff9ecf.svg)
+![Status](https://img.shields.io/badge/status-sprint%203-ff9ecf.svg)
 
 </div>
 
@@ -20,11 +20,17 @@ Trois couches, un même chat :
 
 ## 🧭 Le projet
 
-> Nom de code **Miaou** (provisoire). Ce dépôt démarre par la **planification** ;
-> le code arrive au fil des sprints.
+> Nom de code **Miaou** (provisoire).
 
 - 📖 **[GUIDELINE.md](GUIDELINE.md)** — vision, piliers, principes, architecture, stack, Definition of Done.
 - 📊 **[Dashboard des sprints](dashboard/index.html)** — roadmap et suivi (s'ouvre dans le navigateur).
+
+### Lancer en local
+
+```bash
+npm install
+npm run dev      # → http://localhost:5173  (Chrome/Edge 113+ pour WebGPU)
+```
 
 ## 🐾 Les trois piliers
 

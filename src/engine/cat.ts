@@ -21,6 +21,7 @@ struct U {
   belly  : vec4f,
   eyeCol : vec4f,
   accent : vec4f,
+  morph  : vec4f,   // x = taille oreilles, y = rondeur
 };
 @group(0) @binding(0) var<uniform> u : U;
 
@@ -80,10 +81,13 @@ fn fs(in : VO) -> @location(0) vec4f {
   let q = p / br;
 
   // --- Corps (union lisse : tête + corps + oreilles) ---
-  let head = sdCircle(q - vec2f(0.0, 0.18), 0.42);
-  let body = sdEllipse(q - vec2f(0.0, -0.5), vec2f(0.4, 0.42));
-  let elTip = vec2f(-0.34, 0.52 + 0.08 * u.earPerk);
-  let erTip = vec2f(0.34, 0.52 + 0.08 * u.earPerk);
+  let rd = clamp(u.morph.y, -1.0, 1.0);          // rondeur
+  let es = clamp(u.morph.x, 0.6, 1.4);           // taille des oreilles
+  let head = sdCircle(q - vec2f(0.0, 0.18), 0.42 * (1.0 + 0.05 * rd));
+  let body = sdEllipse(q - vec2f(0.0, -0.5), vec2f(0.4 * (1.0 + 0.02 * rd), 0.42 * (1.0 + 0.04 * rd)));
+  let earTy = 0.36 + (0.16 + 0.08 * u.earPerk) * es;
+  let elTip = vec2f(-0.26 - 0.08 * es, earTy);
+  let erTip = vec2f(0.26 + 0.08 * es, earTy);
   let earL = sdSegment(q, vec2f(-0.26, 0.36), elTip) - 0.1;
   let earR = sdSegment(q, vec2f(0.26, 0.36), erTip) - 0.1;
   var d = smin(head, body, 0.18);

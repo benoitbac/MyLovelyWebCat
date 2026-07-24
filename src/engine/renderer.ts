@@ -1,27 +1,15 @@
 // Renderer WebGPU du compagnon : boucle 60/120 fps, rendu SDF du chat,
 // entrées pointeur (regard + caresse) et pilotage par la machine à humeurs.
 
+import { get } from 'svelte/store';
 import { initWebGPU, type GpuContext } from './gpu';
 import { CAT_WGSL } from './cat';
 import { fps as fpsStore } from '../state/stats';
 import { MoodController } from '../companion/mood';
+import { dna, hexToRGB, type DNA } from '../customization/dna';
 
 const MAX_DPR = 2;
 const ZOOM = 1.15; // doit rester synchronisé avec le shader (cat.ts)
-
-function hex(h: string): [number, number, number] {
-  const n = parseInt(h.slice(1), 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
-}
-
-// Palette « douce » par défaut. Deviendra éditable au Sprint 3 (ADN cosmétique).
-const PALETTE = {
-  furA: hex('#b9a6ff'),
-  furB: hex('#7b5cff'),
-  belly: hex('#efeaff'),
-  eye: hex('#ffd24a'),
-  accent: hex('#ff9ecf'),
-};
 
 export class Renderer {
   private readonly gpu: GpuContext;
@@ -29,9 +17,11 @@ export class Renderer {
   private readonly pipeline: GPURenderPipeline;
   private readonly ubo: GPUBuffer;
   private readonly bindGroup: GPUBindGroup;
-  private readonly uni = new Float32Array(32);
+  private readonly uni = new Float32Array(36);
   private readonly ro: ResizeObserver;
   private readonly mood = new MoodController();
+  private readonly dnaUnsub: () => void;
+  private dnaVal: DNA = get(dna);
 
   private raf = 0;
   private startT = 0;
@@ -63,6 +53,8 @@ export class Renderer {
       layout: this.pipeline.getBindGroupLayout(0),
       entries: [{ binding: 0, resource: { buffer: this.ubo } }],
     });
+
+    this.dnaUnsub = dna.subscribe((d) => (this.dnaVal = d));
 
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(canvas);
@@ -141,11 +133,16 @@ export class Renderer {
     this.uni[9] = e.blush;
     this.uni[10] = e.sleepy;
     this.uni[11] = 1; // amplitude de respiration
-    this.setColor(12, PALETTE.furA);
-    this.setColor(16, PALETTE.furB);
-    this.setColor(20, PALETTE.belly);
-    this.setColor(24, PALETTE.eye);
-    this.setColor(28, PALETTE.accent);
+    const d = this.dnaVal;
+    this.setColor(12, hexToRGB(d.furA));
+    this.setColor(16, hexToRGB(d.furB));
+    this.setColor(20, hexToRGB(d.belly));
+    this.setColor(24, hexToRGB(d.eye));
+    this.setColor(28, hexToRGB(d.accent));
+    this.uni[32] = d.earSize; // morph.x
+    this.uni[33] = d.roundness; // morph.y
+    this.uni[34] = 0;
+    this.uni[35] = 0;
     this.gpu.device.queue.writeBuffer(this.ubo, 0, this.uni);
 
     const enc = this.gpu.device.createCommandEncoder();
@@ -175,6 +172,7 @@ export class Renderer {
   dispose(): void {
     cancelAnimationFrame(this.raf);
     this.ro.disconnect();
+    this.dnaUnsub();
     this.ubo.destroy();
   }
 }
