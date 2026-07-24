@@ -1,9 +1,15 @@
 <script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
   import CompanionStage from './ui/CompanionStage.svelte';
   import Dock from './ui/Dock.svelte';
+  import NeedsPanel from './ui/NeedsPanel.svelte';
   import { theme, toggleTheme } from './state/theme';
   import { fps } from './state/stats';
   import { mood, type Mood } from './companion/mood';
+  import { startNeedsEngine, stopNeedsEngine } from './companion/needs';
+
+  onMount(() => void startNeedsEngine());
+  onDestroy(() => stopNeedsEngine());
 
   const MOOD_LABEL: Record<Mood, string> = {
     content: '😺 content',
@@ -35,6 +41,7 @@
   </header>
 
   <CompanionStage />
+  <NeedsPanel />
   <Dock />
 </main>
 

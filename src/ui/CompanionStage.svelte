@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { Renderer } from '../engine/renderer';
+  import { setRenderer } from '../companion/companion';
 
   let canvas!: HTMLCanvasElement;
   let error = $state<string | null>(null);
@@ -9,12 +10,16 @@
   onMount(async () => {
     try {
       renderer = await Renderer.create(canvas);
+      setRenderer(renderer);
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     }
   });
 
-  onDestroy(() => renderer?.dispose());
+  onDestroy(() => {
+    setRenderer(null);
+    renderer?.dispose();
+  });
 
   function onMove(e: PointerEvent) {
     renderer?.setPointer(e.clientX, e.clientY, true);

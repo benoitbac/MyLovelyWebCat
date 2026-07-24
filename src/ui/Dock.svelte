@@ -1,17 +1,18 @@
 <script lang="ts">
-  // Barre d'actions. Désactivées pour l'instant : elles seront câblées au
-  // Sprint 2 (Tamagotchi) quand le compagnon aura des besoins et réagira.
-  const actions = [
-    { icon: '🤚', label: 'Caresser' },
-    { icon: '🍽️', label: 'Nourrir' },
-    { icon: '🧶', label: 'Jouer' },
-    { icon: '🛁', label: 'Brosser' },
+  import { performAction } from '../companion/companion';
+  import type { ActionKind } from '../companion/needs';
+
+  const actions: { icon: string; label: string; kind: ActionKind }[] = [
+    { icon: '🤚', label: 'Caresser', kind: 'pet' },
+    { icon: '🍽️', label: 'Nourrir', kind: 'feed' },
+    { icon: '🧶', label: 'Jouer', kind: 'play' },
+    { icon: '🛁', label: 'Brosser', kind: 'groom' },
   ];
 </script>
 
 <nav class="dock" aria-label="Actions du compagnon">
-  {#each actions as action (action.label)}
-    <button class="act" disabled title="Bientôt — Sprint 2">
+  {#each actions as action (action.kind)}
+    <button class="act" onclick={() => performAction(action.kind)} title={action.label}>
       <span class="i">{action.icon}</span>
       <span class="l">{action.label}</span>
     </button>
@@ -40,10 +41,17 @@
     background: var(--surface-2);
     color: var(--text);
     font-size: 12px;
-    opacity: 0.55;
+    transition:
+      transform 0.08s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
   }
-  .act:disabled {
-    cursor: not-allowed;
+  .act:hover {
+    background: color-mix(in srgb, var(--brand) 20%, var(--surface-2));
+    box-shadow: 0 0 18px color-mix(in srgb, var(--brand) 35%, transparent);
+  }
+  .act:active {
+    transform: translateY(2px) scale(0.96);
   }
   .i {
     font-size: 20px;
