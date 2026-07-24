@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Miaou — Dashboard</title>
+<style>
+  :root {
+    --bg: #0b0a14; --bg2: #12101f; --card: #181527; --stroke: rgba(150,130,255,.16);
+    --text: #ece9ff; --muted: #a49dc8; --accent: #9a7bff; --neon: #66d9ff;
+    --p1: #9a7bff; --p2: #ff9ecf; --p3: #66d9ff;
+    --todo: #6b6790; --active: #ffd24a; --done: #4ade80;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f4f2fb; --bg2:#eae6f8; --card:#fff; --stroke:rgba(120,100,220,.18);
+      --text:#1c1830; --muted:#655f85; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background: radial-gradient(1200px 600px at 20% -10%, var(--bg2), var(--bg)) fixed;
+    color: var(--text); padding: 32px 20px 80px; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  header.top { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom: 8px; }
+  h1 { margin:0; font-size: 30px; font-weight: 800; letter-spacing:.3px; }
+  h1 span { color: var(--neon); }
+  .tagline { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
+
+  .overall { min-width: 240px; }
+  .overall .bar { height: 12px; }
+  .overall-label { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); margin-bottom:6px; }
+
+  .pillars { display:flex; gap:10px; flex-wrap:wrap; margin: 20px 0 28px; }
+  .pill-tag { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted);
+    background: var(--card); border:1px solid var(--stroke); padding:7px 12px; border-radius:999px; }
+  .dot { width:10px; height:10px; border-radius:50%; }
+
+  .bar { background: rgba(255,255,255,.07); border-radius:999px; overflow:hidden; }
+  .bar > i { display:block; height:100%; border-radius:999px;
+    background: linear-gradient(90deg, var(--accent), var(--neon)); transition: width .4s ease; }
+
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(330px,1fr)); gap:18px; }
+
+  .sprint { background: var(--card); border:1px solid var(--stroke); border-radius:16px; padding:18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.18); display:flex; flex-direction:column; gap:12px; }
+  .sprint.active { border-color: rgba(255,210,74,.45); box-shadow: 0 10px 34px rgba(255,210,74,.10); }
+  .s-head { display:flex; align-items:center; gap:10px; }
+  .s-num { font-size:12px; font-weight:800; color:var(--muted); background:rgba(255,255,255,.06);
+    border:1px solid var(--stroke); padding:3px 9px; border-radius:8px; }
+  .s-title { font-size:16px; font-weight:700; flex:1; }
+  .status { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; padding:4px 9px; border-radius:999px; }
+  .status.todo { color:var(--todo); background:rgba(107,103,144,.14); }
+  .status.active { color:#1c1830; background:var(--active); }
+  .status.done { color:#052e16; background:var(--done); }
+
+  .s-goal { color:var(--muted); font-size:13.5px; line-height:1.5; margin:0; }
+  .s-pillar { font-size:11.5px; font-weight:700; }
+
+  .s-prog { display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted); }
+  .s-prog .bar { flex:1; height:8px; }
+
+  ul.tasks { list-style:none; margin:2px 0 0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  ul.tasks li { display:flex; align-items:flex-start; gap:9px; font-size:13px; line-height:1.45; }
+  .chk { width:16px; height:16px; border-radius:5px; border:1.5px solid var(--stroke); flex:none; margin-top:1px; }
+  .chk.on { background: var(--done); border-color: var(--done); position:relative; }
+  .chk.on::after { content:"✓"; position:absolute; inset:0; font-size:11px; color:#052e16; display:flex; align-items:center; justify-content:center; font-weight:900; }
+  li.done span { color: var(--muted); text-decoration: line-through; }
+
+  footer { text-align:center; color:var(--muted); font-size:12px; margin-top:40px; }
+  .legend { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Miaou <span>·</span> Dashboard</h1>
+      <p class="tagline">Compagnon félin WebGPU — suivi des sprints</p>
+    </div>
+    <div class="overall">
+      <div class="overall-label"><span>Avancement global</span><b id="ov-pct">0%</b></div>
+      <div class="bar"><i id="ov-bar" style="width:0%"></i></div>
+      <div class="overall-label" style="margin-top:6px"><span id="ov-tasks">0 / 0 tâches</span><span id="ov-sprints"></span></div>
+    </div>
+  </header>
+
+  <div class="pillars">
+    <span class="pill-tag"><span class="dot" style="background:var(--p1)"></span> Pilier 1 · Compagnon de bureau</span>
+    <span class="pill-tag"><span class="dot" style="background:var(--p2)"></span> Pilier 2 · Playroom (vrai chat)</span>
+    <span class="pill-tag"><span class="dot" style="background:var(--p3)"></span> Pilier 3 · Home (caméra + remote)</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    Source de vérité : <b>GUIDELINE.md</b> + ce dashboard · mis à jour à chaque sprint.
+    <div class="legend">
+      <span>⬜ à venir</span><span>🟨 en cours</span><span>🟩 fait</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+// ============================================================================
+//  Données de la roadmap — SOURCE DE VÉRITÉ du suivi.
+//  Mettre à jour `status` et `done` au fil des sprints, puis committer.
+//  status: "todo" | "active" | "done"
+// ============================================================================
+const PILLAR_COLOR = { 1: "var(--p1)", 2: "var(--p2)", 3: "var(--p3)" };
+const PILLAR_LABEL = { 1: "Pilier 1 · Companion", 2: "Pilier 2 · Playroom", 3: "Pilier 3 · Home", 0: "Fondations" };
+
+const SPRINTS = [
+  {
+    n: 0, title: "Fondations & outillage", pillar: 0, status: "todo",
+    goal: "Mettre en place la base technique : projet, PWA, rendu, design system et ce dashboard.",
+    tasks: [
+      ["Scaffold Vite + TypeScript + Svelte 5", false],
+      ["ESLint + Prettier + config TS stricte", false],
+      ["Bootstrap WebGPU (device, canvas, boucle de rendu)", false],
+      ["Base PWA (manifest + service worker) installable", false],
+      ["Design system : tokens couleurs/typo, thème clair/sombre", false],
+      ["Structure des modules (engine, companion, ui, state…)", false],
+      ["CI GitHub Actions (build + lint)", false],
+    ],
+  },
+  {
+    n: 1, title: "Le compagnon vivant", pillar: 1, status: "todo",
+    goal: "Un chat rendu en WebGPU qui bouge, respire, suit la souris et affiche des humeurs de base.",
+    tasks: [
+      ["Rendu du chat (silhouette charmante + visage)", false],
+      ["Boucle d'animation découplée de la logique (60/120 fps)", false],
+      ["Respiration / idle / regard qui suit le curseur", false],
+      ["Machine à états d'humeur (joueur, câlin, endormi…)", false],
+      ["Transitions d'humeur fluides", false],
+    ],
+  },
+  {
+    n: 2, title: "Tamagotchi", pillar: 1, status: "todo",
+    goal: "Des besoins qui évoluent dans le temps et des actions pour s'occuper du compagnon.",
+    tasks: [
+      ["Modèle de besoins (faim, énergie, humeur, propreté) + decay", false],
+      ["Actions : caresser, nourrir, jouer, brosser", false],
+      ["Réactions du chat aux actions", false],
+      ["Persistance de l'état (IndexedDB)", false],
+      ["Notifications douces (besoin d'attention)", false],
+    ],
+  },
+  {
+    n: 3, title: "ADN cosmétique", pillar: 1, status: "todo",
+    goal: "Personnaliser le chat : couleurs, accessoires, morphologie, et déblocables.",
+    tasks: [
+      ["Panneau de customisation (couleurs pelage/yeux/glow)", false],
+      ["Accessoires (chapeaux, colliers…)", false],
+      ["Variations de morphologie", false],
+      ["Déblocables liés au soin/jeu", false],
+      ["Persistance de l'apparence", false],
+    ],
+  },
+  {
+    n: 4, title: "Partage social", pillar: 1, status: "todo",
+    goal: "Capturer et partager les moments mignons du compagnon.",
+    tasks: [
+      ["Capture image (carte de partage stylée)", false],
+      ["Capture clip vidéo court", false],
+      ["Lien encodant l'état/l'apparence du chat", false],
+      ["Export aux formats réseaux (opt-in)", false],
+    ],
+  },
+  {
+    n: 5, title: "Playroom", pillar: 2, status: "todo",
+    goal: "Des jeux plein écran pour le vrai chat, avec capture automatique des moments.",
+    tasks: [
+      ["Moteur de jeu 'proie' (pelote, insecte, laser)", false],
+      ["Mouvements crédibles + attrapabilité (gagnable)", false],
+      ["Mode plein écran / kiosque", false],
+      ["Capture auto de moments de jeu", false],
+      ["Garde-fous bien-être (durée, pauses, pas de stress)", false],
+    ],
+  },
+  {
+    n: 6, title: "Vision & interaction", pillar: 2, status: "todo",
+    goal: "Détecter les interactions du chat (patte/mouvement) via la caméra ou le tactile.",
+    tasks: [
+      ["Accès caméra locale (getUserMedia + consentement)", false],
+      ["Détection de mouvement (diff d'images / CV léger)", false],
+      ["Réaction du jeu à la patte du chat", false],
+      ["Fallback tactile", false],
+    ],
+  },
+  {
+    n: 7, title: "Home local", pillar: 3, status: "todo",
+    goal: "Relier téléphone et maison en réseau local : voir, parler, lancer un jeu à distance.",
+    tasks: [
+      ["Appairage par QR / lien (signaling manuel local)", false],
+      ["Flux vidéo live maison → téléphone (WebRTC)", false],
+      ["Audio bidirectionnel (parler au chat)", false],
+      ["Commande à distance : lancer un jeu (DataChannel)", false],
+      ["Galerie de moments capturés", false],
+    ],
+  },
+  {
+    n: 8, title: "Cloud & comptes", pillar: 3, status: "todo",
+    goal: "Accès distant réel depuis n'importe où, avec comptes et galerie partagée.",
+    tasks: [
+      ["Backend signaling + relais TURN", false],
+      ["Comptes & appairage persistant des appareils", false],
+      ["Accès distant hors réseau local", false],
+      ["Galerie de moments partagée / réseaux", false],
+      ["Exploratoire : hooks hardware (ESP32)", false],
+    ],
+  },
+];
+
+// --- Rendu ------------------------------------------------------------------
+const grid = document.getElementById("grid");
+let totalTasks = 0, doneTasks = 0, doneSprints = 0;
+
+for (const s of SPRINTS) {
+  const done = s.tasks.filter(t => t[1]).length;
+  const pct = s.tasks.length ? Math.round(done / s.tasks.length * 100) : 0;
+  totalTasks += s.tasks.length; doneTasks += done;
+  if (s.status === "done") doneSprints++;
+
+  const card = document.createElement("div");
+  card.className = "sprint" + (s.status === "active" ? " active" : "");
+  card.innerHTML = `
+    <div class="s-head">
+      <span class="s-num">S${s.n}</span>
+      <span class="s-title">${s.title}</span>
+      <span class="status ${s.status}">${s.status === "done" ? "Fait" : s.status === "active" ? "En cours" : "À venir"}</span>
+    </div>
+    <div class="s-pillar" style="color:${PILLAR_COLOR[s.pillar]}">${PILLAR_LABEL[s.pillar]}</div>
+    <p class="s-goal">${s.goal}</p>
+    <div class="s-prog"><div class="bar"><i style="width:${pct}%"></i></div><b>${done}/${s.tasks.length}</b></div>
+    <ul class="tasks">
+      ${s.tasks.map(([t, d]) => `<li class="${d ? "done" : ""}"><span class="chk ${d ? "on" : ""}"></span><span>${t}</span></li>`).join("")}
+    </ul>`;
+  grid.appendChild(card);
+}
+
+const ovPct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+document.getElementById("ov-pct").textContent = ovPct + "%";
+document.getElementById("ov-bar").style.width = ovPct + "%";
+document.getElementById("ov-tasks").textContent = `${doneTasks} / ${totalTasks} tâches`;
+document.getElementById("ov-sprints").textContent = `${doneSprints} / ${SPRINTS.length} sprints`;
+</script>
+</body>
+</html>
