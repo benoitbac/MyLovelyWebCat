@@ -1,55 +1,100 @@
 <div align="center">
 
-<img src="assets/cat.svg" alt="MyLovelyWebCat mascot" width="260" />
+<img src="assets/cat.svg" alt="NekoGPU mascot" width="240" />
 
-# MyLovelyWebCat
+# 🐱 NekoGPU
 
-**A lovely little web project — with a cat we adore.** 🐾
+**Un compagnon virtuel félin de bureau, ultra-fluide, 100 % WebGPU — sans AUCUNE dépendance.**
+
+Des dizaines de milliers de particules simulées sur le GPU dessinent un chat qui
+respire, réagit à ta souris, se laisse caresser… et que tu peux personnaliser
+puis partager d'un lien. Pas de Three.js, pas de React, pas de build. Juste du
+HTML / JS / WGSL vanilla.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-8b7bf5.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-5b4bd6.svg)](CONTRIBUTING.md)
-![Status](https://img.shields.io/badge/status-bootstrapping-ff8fb1.svg)
+![WebGPU](https://img.shields.io/badge/WebGPU-compute%20%2B%20render-00e5ff.svg)
+![Zero deps](https://img.shields.io/badge/dependencies-0-39ff14.svg)
+![Vanilla](https://img.shields.io/badge/vanilla-JS%20%2F%20WGSL-ff8fb1.svg)
 
 </div>
 
 ---
 
-## 🐱 About
+## ✨ Fonctionnalités
 
-MyLovelyWebCat is just getting started. This repository is bootstrapped clean and
-ready — the actual scope and stack will land with the first feature.
+- **Moteur de particules massivement parallèle** — un *compute shader* WGSL fait
+  vivre jusqu'à **90 000 particules** dans un Storage Buffer, qui s'assemblent
+  dynamiquement en silhouette de chat (corps, oreilles, queue, yeux qui clignent).
+- **Rendu néon HDR** — sprites additifs, tone mapping ACES, fond cyber et
+  **traînée lumineuse** obtenue par une passe de feedback ping-pong (`rgba16float`).
+- **ADN Cosmétique** — pelage, néon, couleur des yeux, densité, lueur, longueur de
+  traînée, chapeau cyberpunk 🎩. Tout est modifiable **en direct**.
+- **Partage** — bouton *Lien de partage* (l'état exact du chat encodé dans l'URL)
+  et *Ma carte* (export **PNG 1200×630** prêt à flex sur les réseaux).
+- **Comportements vivants** — le chat **suit** la souris (aimant) ou la **fuit**
+  (timide), part en **respiration lente** quand tu es inactif, et réagit au clic
+  par une **onde de choc** (comme une caresse).
 
-> **Heads up:** structure, tooling and this README will be adapted as soon as the
-> project's first real requirements arrive.
+## 🚀 Démarrage
 
-## 🚀 Getting started
+Aucune dépendance à installer. Un petit serveur statique natif (Node ≥ 18) suffit —
+il est nécessaire car WebGPU + modules ES ne tournent pas en `file://`.
 
 ```bash
 git clone https://github.com/benoitbac/MyLovelyWebCat.git
 cd MyLovelyWebCat
+npm start          # → http://localhost:8080
 ```
 
-_Setup instructions will be filled in once the tech stack is chosen._
+> Navigateur requis : **Chrome / Edge 113+**, ou Firefox récent avec WebGPU activé.
 
-## 🗂️ Project structure
+## 🎮 Prise en main
+
+| Action | Effet |
+| --- | --- |
+| Bouger la souris | Le chat suit / fuit le curseur |
+| Cliquer | Onde de choc — une caresse |
+| Rester inactif | Respiration lente (mode repos) |
+| `R` | ADN aléatoire |
+| `H` | Afficher / masquer le panneau |
+
+## 🧠 Architecture
+
+Pipeline GPU en **4 passes** par frame :
 
 ```
-MyLovelyWebCat/
-├── assets/        # Images and static media
-├── .github/       # Issue templates, workflows, labels
-├── LICENSE        # MIT
-└── README.md
+compute (simulate.wgsl)  →  ressorts + souris + clic + respiration
+   │
+fade (fade.wgsl)         →  atténue la traînée précédente  ┐ ping-pong
+   │                                                        │ rgba16float
+particles (particles.wgsl) → sprites additifs (bloom)      ┘
+   │
+present (present.wgsl)   →  fond cyber + ACES + vignette → écran
 ```
 
-## 🤝 Contributing
+```
+src/
+├── main.js              # orchestrateur : boucle, entrées, uniformes, actions
+├── gpu/
+│   ├── device.js        # init WebGPU (adaptateur / device / canvas)
+│   └── engine.js        # pipelines, textures, les 4 passes de rendu
+├── cat/
+│   ├── silhouette.js    # génération des particules (échantillonnage par rejet)
+│   └── dna.js           # état cosmétique + encodage URL de partage
+├── ui/
+│   ├── controls.js      # panneau ↔ ADN
+│   └── share.js         # lien de partage + carte PNG
+└── shaders/*.wgsl       # simulate · particles · fade · present
+```
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) and the
-[Code of Conduct](CODE_OF_CONDUCT.md).
+## 🤝 Contribuer
 
-## 📄 License
+Voir [CONTRIBUTING.md](CONTRIBUTING.md) et le [Code de conduite](CODE_OF_CONDUCT.md).
 
-Released under the [MIT License](LICENSE).
+## 📄 Licence
+
+[MIT](LICENSE).
 
 <div align="center">
-<sub>Made with 🐈 and care.</sub>
+<sub>Fait avec 🐈 et beaucoup de particules.</sub>
 </div>
