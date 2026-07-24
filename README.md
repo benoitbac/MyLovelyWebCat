@@ -28,11 +28,11 @@ Trois couches, un même chat :
 
 ## 🐾 Les trois piliers
 
-| | Pilier | En bref |
-| --- | --- | --- |
-| 🖥️ | **Companion** | Compagnon de bureau vivant : humeurs, besoins, câlins, customisation |
-| 🧶 | **Playroom** | Jeux plein écran pour occuper ton vrai chat (proie, pelote, laser) |
-| 📱 | **Home** | Filmer, parler, et lancer un jeu à distance depuis le téléphone |
+|     | Pilier        | En bref                                                              |
+| --- | ------------- | -------------------------------------------------------------------- |
+| 🖥️  | **Companion** | Compagnon de bureau vivant : humeurs, besoins, câlins, customisation |
+| 🧶  | **Playroom**  | Jeux plein écran pour occuper ton vrai chat (proie, pelote, laser)   |
+| 📱  | **Home**      | Filmer, parler, et lancer un jeu à distance depuis le téléphone      |
 
 **Fil rouge :** chaque moment mignon est capturable et partageable (opt-in).
 
