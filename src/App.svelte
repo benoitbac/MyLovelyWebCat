@@ -3,6 +3,14 @@
   import Dock from './ui/Dock.svelte';
   import { theme, toggleTheme } from './state/theme';
   import { fps } from './state/stats';
+  import { mood, type Mood } from './companion/mood';
+
+  const MOOD_LABEL: Record<Mood, string> = {
+    content: '😺 content',
+    playful: '😸 joueur',
+    sleepy: '😴 endormi',
+    happy: '😻 heureux',
+  };
 </script>
 
 <main>
@@ -13,6 +21,7 @@
       <span class="tag">companion</span>
     </div>
     <div class="meta">
+      <span class="mood" title="Humeur du compagnon">{MOOD_LABEL[$mood]}</span>
       <span class="fps" title="Images par seconde">{$fps} FPS</span>
       <button
         class="icon"
@@ -72,6 +81,14 @@
     font-variant-numeric: tabular-nums;
     font-size: 12px;
     color: var(--muted);
+  }
+  .mood {
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--stroke);
+    border-radius: 999px;
+    padding: 3px 10px;
   }
   .icon {
     background: var(--surface-2);

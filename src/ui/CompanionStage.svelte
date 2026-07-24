@@ -15,10 +15,22 @@
   });
 
   onDestroy(() => renderer?.dispose());
+
+  function onMove(e: PointerEvent) {
+    renderer?.setPointer(e.clientX, e.clientY, true);
+  }
+  function onLeave() {
+    renderer?.clearPointer();
+  }
+  function onDown(e: PointerEvent) {
+    renderer?.setPointer(e.clientX, e.clientY, true);
+    renderer?.pet(); // caresser au clic
+  }
 </script>
 
 <div class="stage">
-  <canvas bind:this={canvas}></canvas>
+  <canvas bind:this={canvas} onpointermove={onMove} onpointerleave={onLeave} onpointerdown={onDown}
+  ></canvas>
 
   {#if error}
     <div class="fallback" role="alert">
@@ -40,6 +52,8 @@
     display: block;
     width: 100%;
     height: 100%;
+    touch-action: none;
+    cursor: pointer;
   }
   .fallback {
     position: absolute;
