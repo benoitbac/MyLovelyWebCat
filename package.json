@@ -1,0 +1,15 @@
+{
+  "name": "nekogpu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Un compagnon virtuel félin de bureau, 100% WebGPU, sans aucune dépendance externe.",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
