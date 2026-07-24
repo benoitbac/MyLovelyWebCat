@@ -9,14 +9,19 @@
   import { mood, type Mood } from './companion/mood';
   import { startNeedsEngine, stopNeedsEngine } from './companion/needs';
   import { startDnaEngine } from './customization/dna';
+  import { startCompanionLoop, stopCompanionLoop } from './companion/loop';
 
   let showCustomize = $state(false);
 
   onMount(() => {
     void startNeedsEngine();
     void startDnaEngine();
+    startCompanionLoop();
   });
-  onDestroy(() => stopNeedsEngine());
+  onDestroy(() => {
+    stopNeedsEngine();
+    stopCompanionLoop();
+  });
 
   const MOOD_LABEL: Record<Mood, string> = {
     content: '😺 content',
