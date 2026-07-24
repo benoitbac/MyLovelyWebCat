@@ -33,6 +33,7 @@
   let mixer: THREE.AnimationMixer | null = null;
   let fileInput!: HTMLInputElement;
   let importErr = $state<string | null>(null);
+  let importing = $state(false);
 
   function placeModel(obj: THREE.Object3D, animations: THREE.AnimationClip[]) {
     if (importedModel) scene.remove(importedModel);
@@ -64,21 +65,41 @@
     }
   }
 
+  function loadFile(f: File) {
+    importErr = null;
+    importing = true;
+    void f
+      .arrayBuffer()
+      .then((buf) => {
+        new GLTFLoader().parse(
+          buf,
+          '',
+          (g) => {
+            placeModel(g.scene, g.animations);
+            importing = false;
+          },
+          (err) => {
+            importErr = 'Modèle illisible (.glb / .gltf)';
+            importing = false;
+            console.error(err);
+          },
+        );
+      })
+      .catch(() => {
+        importErr = 'Lecture du fichier impossible';
+        importing = false;
+      });
+  }
+
   function onImport(e: Event) {
     const f = (e.target as HTMLInputElement).files?.[0];
-    if (!f) return;
-    importErr = null;
-    void f.arrayBuffer().then((buf) => {
-      new GLTFLoader().parse(
-        buf,
-        '',
-        (g) => placeModel(g.scene, g.animations),
-        (err) => {
-          importErr = 'Modèle illisible (.glb / .gltf)';
-          console.error(err);
-        },
-      );
-    });
+    if (f) loadFile(f);
+  }
+
+  function onDrop(e: DragEvent) {
+    e.preventDefault();
+    const f = e.dataTransfer?.files?.[0];
+    if (f) loadFile(f);
   }
 
   function useDefaultCat() {
@@ -194,12 +215,21 @@
 </script>
 
 <div class="creator">
-  <div class="viewport" bind:this={host}>
+  <div
+    class="viewport"
+    bind:this={host}
+    ondragover={(e) => e.preventDefault()}
+    ondrop={onDrop}
+    role="presentation"
+  >
     <canvas bind:this={canvas}></canvas>
     <div class="title">
       <h1>Crée ton chat</h1>
-      <p>Glisse pour tourner autour · règle tout à ta guise</p>
+      <p>Glisse pour tourner autour · dépose un <b>.glb</b> pour ton vrai chat</p>
     </div>
+    {#if importing}
+      <div class="loading">⏳ Chargement du modèle…</div>
+    {/if}
   </div>
 
   <aside class="panel">
@@ -535,5 +565,18 @@
     font-size: 11px;
     line-height: 1.5;
     color: var(--muted);
+  }
+  .loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: rgba(15, 12, 30, 0.85);
+    border: 1px solid var(--stroke);
+    color: var(--text);
+    font-weight: 600;
+    z-index: 5;
   }
 </style>
