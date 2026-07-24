@@ -3,6 +3,7 @@
   import * as THREE from 'three';
   import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
   import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
   import { createCat, type CatModel } from '../../creator/cat3d';
   import {
     dna,
@@ -27,6 +28,68 @@
   let raf = 0;
   let ro: ResizeObserver;
   let unsub: () => void;
+
+  let importedModel: THREE.Object3D | null = null;
+  let mixer: THREE.AnimationMixer | null = null;
+  let fileInput!: HTMLInputElement;
+  let importErr = $state<string | null>(null);
+
+  function placeModel(obj: THREE.Object3D, animations: THREE.AnimationClip[]) {
+    if (importedModel) scene.remove(importedModel);
+    mixer?.stopAllAction();
+    mixer = null;
+
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = box.getSize(new THREE.Vector3());
+    const scale = 2.6 / Math.max(size.x, size.y, size.z || 1);
+    obj.scale.setScalar(scale);
+    const b2 = new THREE.Box3().setFromObject(obj);
+    const c2 = b2.getCenter(new THREE.Vector3());
+    obj.position.x -= c2.x;
+    obj.position.z -= c2.z;
+    obj.position.y -= b2.min.y;
+    obj.traverse((o) => {
+      if (o instanceof THREE.Mesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+      }
+    });
+    scene.add(obj);
+    importedModel = obj;
+    cat.group.visible = false;
+
+    if (animations.length) {
+      mixer = new THREE.AnimationMixer(obj);
+      mixer.clipAction(animations[0]).play();
+    }
+  }
+
+  function onImport(e: Event) {
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
+    importErr = null;
+    void f.arrayBuffer().then((buf) => {
+      new GLTFLoader().parse(
+        buf,
+        '',
+        (g) => placeModel(g.scene, g.animations),
+        (err) => {
+          importErr = 'Modèle illisible (.glb / .gltf)';
+          console.error(err);
+        },
+      );
+    });
+  }
+
+  function useDefaultCat() {
+    if (importedModel) {
+      scene.remove(importedModel);
+      importedModel = null;
+    }
+    mixer?.stopAllAction();
+    mixer = null;
+    cat.group.visible = true;
+  }
 
   function resize() {
     const w = host.clientWidth;
@@ -108,7 +171,10 @@
     ro.observe(host);
     resize();
 
+    const clock = new THREE.Clock();
     const loop = () => {
+      const dt = clock.getDelta();
+      mixer?.update(dt);
       controls.update();
       renderer.render(scene, camera);
       raf = requestAnimationFrame(loop);
@@ -141,6 +207,26 @@
       Nom
       <input type="text" bind:value={name} maxlength="16" placeholder="Ex : Pixel, Mochi…" />
     </label>
+
+    <div class="section">Mon vrai chat (réaliste)</div>
+    <input
+      type="file"
+      accept=".glb,.gltf,model/gltf-binary"
+      bind:this={fileInput}
+      onchange={onImport}
+      style="display:none"
+    />
+    <div class="btns" style="margin-top:0">
+      <button class="ghost" style="flex:1" onclick={() => fileInput.click()}
+        >📁 Importer un modèle</button
+      >
+      <button class="ghost" onclick={useDefaultCat} title="Revenir au chat stylisé">↩︎</button>
+    </div>
+    {#if importErr}<span class="err">{importErr}</span>{/if}
+    <p class="hint3d">
+      Génère le <b>.glb</b> de ton chat depuis sa photo (Meshy / Tripo), importe-le : il s'affiche en
+      3D texturé et, s'il est animé, l'animation se joue.
+    </p>
 
     <div class="section">Robe</div>
     <div class="presets">
@@ -439,5 +525,15 @@
     color: #fff;
     background: linear-gradient(135deg, var(--brand), #4636b8);
     box-shadow: 0 8px 24px rgba(123, 92, 255, 0.45);
+  }
+  .err {
+    color: #ff8a8a;
+    font-size: 12px;
+  }
+  .hint3d {
+    margin: 4px 0 0;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--muted);
   }
 </style>
