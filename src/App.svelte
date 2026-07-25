@@ -5,9 +5,11 @@
   import GameScene from './ui/GameScene.svelte';
   import { screen, startApp } from './state/app';
   import { startDnaEngine } from './customization/dna';
+  import { startCatConfig } from './state/cat';
 
   onMount(() => {
     void startDnaEngine();
+    void startCatConfig();
     void startApp();
   });
 </script>
