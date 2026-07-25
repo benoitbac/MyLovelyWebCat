@@ -188,9 +188,9 @@
     scene.add(cat.group);
     unsub = dna.subscribe((d) => cat?.update(d)); // fire immédiat = update initial
 
-    // Charge un vrai modèle 3D animé (CC0) par défaut, au lieu de la géométrie.
+    // Charge un vrai modèle 3D de chat par défaut, au lieu de la géométrie.
     new GLTFLoader().load(
-      '/models/animal.glb',
+      '/models/cat.glb',
       (g) => placeModel(g.scene, g.animations),
       undefined,
       (e) => console.warn('modèle par défaut indisponible', e),
