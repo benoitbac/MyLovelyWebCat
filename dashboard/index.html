@@ -8,7 +8,7 @@
   :root {
     --bg: #0b0a14; --bg2: #12101f; --card: #181527; --stroke: rgba(150,130,255,.16);
     --text: #ece9ff; --muted: #a49dc8; --accent: #9a7bff; --neon: #66d9ff;
-    --p1: #9a7bff; --p2: #ff9ecf; --p3: #66d9ff;
+    --p0: #9aa0c0; --p1: #9a7bff; --p2: #ff9ecf; --p3: #66d9ff;
     --todo: #6b6790; --active: #ffd24a; --done: #4ade80;
   }
   @media (prefers-color-scheme: light) {
@@ -75,7 +75,7 @@
   <header class="top">
     <div>
       <h1>Miaou <span>·</span> Dashboard</h1>
-      <p class="tagline">Compagnon félin WebGPU — suivi des sprints</p>
+      <p class="tagline">GTA-like félin · game of life 3D — suivi des lots</p>
     </div>
     <div class="overall">
       <div class="overall-label"><span>Avancement global</span><b id="ov-pct">0%</b></div>
@@ -85,15 +85,16 @@
   </header>
 
   <div class="pillars">
-    <span class="pill-tag"><span class="dot" style="background:var(--p1)"></span> Pilier 1 · Compagnon de bureau</span>
-    <span class="pill-tag"><span class="dot" style="background:var(--p2)"></span> Pilier 2 · Playroom (vrai chat)</span>
-    <span class="pill-tag"><span class="dot" style="background:var(--p3)"></span> Pilier 3 · Home (caméra + remote)</span>
+    <span class="pill-tag"><span class="dot" style="background:var(--p0)"></span> Fondations (Rust·.NET·Web)</span>
+    <span class="pill-tag"><span class="dot" style="background:var(--p1)"></span> Créateur 3D</span>
+    <span class="pill-tag"><span class="dot" style="background:var(--p2)"></span> Monde &amp; Jeux</span>
+    <span class="pill-tag"><span class="dot" style="background:var(--p3)"></span> Social &amp; Multi</span>
   </div>
 
   <div class="grid" id="grid"></div>
 
   <footer>
-    Source de vérité : <b>GUIDELINE.md</b> + ce dashboard · mis à jour à chaque sprint.
+    Source de vérité : <b>GUIDELINE.md</b> + ce dashboard · mis à jour au fil des lots.
     <div class="legend">
       <span>⬜ à venir</span><span>🟨 en cours</span><span>🟩 fait</span>
     </div>
@@ -102,130 +103,104 @@
 
 <script>
 // ============================================================================
-//  Données de la roadmap — SOURCE DE VÉRITÉ du suivi.
-//  Mettre à jour `status` et `done` au fil des sprints, puis committer.
-//  status: "todo" | "active" | "done"
+//  Roadmap Miaou — SOURCE DE VÉRITÉ du suivi. status: "todo" | "active" | "done"
+//  pillar: 0 Fondations · 1 Créateur 3D · 2 Monde & Jeux · 3 Social & Multi
 // ============================================================================
-const PILLAR_COLOR = { 1: "var(--p1)", 2: "var(--p2)", 3: "var(--p3)" };
-const PILLAR_LABEL = { 1: "Pilier 1 · Companion", 2: "Pilier 2 · Playroom", 3: "Pilier 3 · Home", 0: "Fondations" };
+const PILLAR_COLOR = { 0: "var(--p0)", 1: "var(--p1)", 2: "var(--p2)", 3: "var(--p3)" };
+const PILLAR_LABEL = { 0: "Fondations", 1: "Créateur 3D", 2: "Monde & Jeux", 3: "Social & Multi" };
 
 const SPRINTS = [
   {
-    n: 0, title: "Fondations & outillage", pillar: 0, status: "done",
-    goal: "Mettre en place la base technique : projet, PWA, rendu, design system et ce dashboard.",
+    n: "A", title: "Fondations stack", pillar: 0, status: "done",
+    goal: "La stack studio en place et qui tourne : moteur Rust/WASM, backend .NET, shell web.",
     tasks: [
-      ["Scaffold Vite + TypeScript + Svelte 5", true],
-      ["ESLint + Prettier + config TS stricte", true],
-      ["Bootstrap WebGPU (device, canvas, boucle de rendu)", true],
-      ["Base PWA (manifest + service worker) installable", true],
-      ["Design system : tokens couleurs/typo, thème clair/sombre", true],
-      ["Structure des modules (engine, companion, ui, state…)", true],
-      ["CI GitHub Actions (build + lint)", true],
+      ["Moteur de jeu en Rust → WebAssembly (wasm-pack)", true],
+      ["Backend .NET 9 + SignalR (/health, /api/scores, hub arène)", true],
+      ["Shell Svelte 5 + TypeScript + Vite, routeur d'écrans", true],
+      ["Sim de vie du chat en Rust (besoins, jour/nuit)", true],
+      ["check / lint / build verts", true],
     ],
   },
   {
-    n: 1, title: "Le compagnon vivant", pillar: 1, status: "done",
-    goal: "Un chat rendu en WebGPU qui bouge, respire, suit la souris et affiche des humeurs de base.",
+    n: "B", title: "Créateur 3D (avatar)", pillar: 1, status: "done",
+    goal: "Créer son chat en 3D façon GTA : vrais modèles, import, personnalisation, présentation premium.",
     tasks: [
-      ["Rendu du chat en SDF (silhouette charmante + visage)", true],
-      ["Boucle d'animation découplée de la logique (60/120 fps)", true],
-      ["Respiration / clignement / regard qui suit le curseur", true],
-      ["Machine à états d'humeur (joueur, câlin, endormi, heureux)", true],
-      ["Transitions d'humeur fluides + caresse au clic", true],
+      ["Scène 3D studio (Three.js, orbit, ombres, environnement)", true],
+      ["Galerie de vrais chats (.glb CC-BY) + import du sien (glisser-déposer)", true],
+      ["Personnalisation : teinte, corpulence, chapeau", true],
+      ["Présentation premium (bloom, sol brillant, matériaux naturels)", true],
+      ["Vignettes réelles des chats dans la galerie", false],
+      ["Accessoires ancrés par modèle (collier, lunettes)", false],
     ],
   },
   {
-    n: 2, title: "Tamagotchi", pillar: 1, status: "done",
-    goal: "Des besoins qui évoluent dans le temps et des actions pour s'occuper du compagnon.",
+    n: "C", title: "Monde 3D", pillar: 2, status: "done",
+    goal: "Un monde 3D où ton chat vit et se balade, caméra 3e personne, cycle jour/nuit.",
     tasks: [
-      ["Modèle de besoins (faim, énergie, propreté, affection) + decay", true],
-      ["Actions : caresser, nourrir, jouer, brosser", true],
-      ["Réactions du chat aux actions", true],
-      ["Persistance de l'état (IndexedDB) + décroissance hors-ligne", true],
-      ["Notifications douces (besoin d'attention)", true],
+      ["Scène monde (prairie, arbres, rochers, brouillard, jour/nuit)", true],
+      ["Chat 3D posé + déplacement clic-pour-aller", true],
+      ["Caméra 3e personne (suit + orbite + zoom)", true],
+      ["Animation de marche du chat", false],
+      ["Décor enrichi / points d'intérêt", false],
     ],
   },
   {
-    n: 3, title: "ADN cosmétique", pillar: 1, status: "active",
-    goal: "Personnaliser le chat : couleurs, accessoires, morphologie, et déblocables.",
+    n: "D", title: "Game of life", pillar: 2, status: "active",
+    goal: "Le chat vit : besoins, soins, économie, vie autonome dans le monde.",
     tasks: [
-      ["Panneau de customisation (couleurs pelage/ventre/yeux/rose)", true],
-      ["Variations de morphologie (oreilles, rondeur)", true],
-      ["Persistance de l'apparence + lien de partage (URL)", true],
-      ["Accessoires (chapeaux, colliers…)", false],
-      ["Déblocables liés au soin/jeu", false],
+      ["Sim de vie Rust (besoins qui évoluent) + HUD", true],
+      ["Dock de soins (nourrir / câliner / jouer / laver)", true],
+      ["Économie (pièces gagnées en jouant)", true],
+      ["Vie autonome du chat dans le monde", false],
+      ["Objets interactifs (gamelle, panier, jouets)", false],
     ],
   },
   {
-    n: 4, title: "Partage social", pillar: 1, status: "todo",
-    goal: "Capturer et partager les moments mignons du compagnon.",
+    n: "E", title: "Jeux", pillar: 2, status: "active",
+    goal: "De vrais mini-jeux qui nourrissent l'économie, avec bonus et déblocables.",
     tasks: [
-      ["Capture image (carte de partage stylée)", false],
-      ["Capture clip vidéo court", false],
-      ["Lien encodant l'état/l'apparence du chat", false],
-      ["Export aux formats réseaux (opt-in)", false],
+      ["Miaou Pounce (moteur Rust) jouable", true],
+      ["Récompense en pièces + joie", true],
+      ["2-3 autres mini-jeux", false],
+      ["Bonus / déblocables", false],
     ],
   },
   {
-    n: 5, title: "Playroom", pillar: 2, status: "todo",
-    goal: "Des jeux plein écran pour le vrai chat, avec capture automatique des moments.",
+    n: "F", title: "Multijoueur", pillar: 3, status: "todo",
+    goal: "Les chats des collègues dans le même monde, en temps réel (SignalR).",
     tasks: [
-      ["Moteur de jeu 'proie' (pelote, insecte, laser)", false],
-      ["Mouvements crédibles + attrapabilité (gagnable)", false],
-      ["Mode plein écran / kiosque", false],
-      ["Capture auto de moments de jeu", false],
-      ["Garde-fous bien-être (durée, pauses, pas de stress)", false],
+      ["Client SignalR (présence, salle 'bureau')", false],
+      ["Chats des autres joueurs dans le monde (positions live)", false],
+      ["Scores / classements en direct", false],
+      ["Interactions sociales (coucou, jouer ensemble)", false],
     ],
   },
   {
-    n: 6, title: "Vision & interaction", pillar: 2, status: "todo",
-    goal: "Détecter les interactions du chat (patte/mouvement) via la caméra ou le tactile.",
+    n: "G", title: "Partage social", pillar: 3, status: "todo",
+    goal: "Montrer son chat et ses scores : captures, cartes, liens.",
     tasks: [
-      ["Accès caméra locale (getUserMedia + consentement)", false],
-      ["Détection de mouvement (diff d'images / CV léger)", false],
-      ["Réaction du jeu à la patte du chat", false],
-      ["Fallback tactile", false],
-    ],
-  },
-  {
-    n: 7, title: "Home local", pillar: 3, status: "todo",
-    goal: "Relier téléphone et maison en réseau local : voir, parler, lancer un jeu à distance.",
-    tasks: [
-      ["Appairage par QR / lien (signaling manuel local)", false],
-      ["Flux vidéo live maison → téléphone (WebRTC)", false],
-      ["Audio bidirectionnel (parler au chat)", false],
-      ["Commande à distance : lancer un jeu (DataChannel)", false],
-      ["Galerie de moments capturés", false],
-    ],
-  },
-  {
-    n: 8, title: "Cloud & comptes", pillar: 3, status: "todo",
-    goal: "Accès distant réel depuis n'importe où, avec comptes et galerie partagée.",
-    tasks: [
-      ["Backend signaling + relais TURN", false],
-      ["Comptes & appairage persistant des appareils", false],
-      ["Accès distant hors réseau local", false],
-      ["Galerie de moments partagée / réseaux", false],
-      ["Exploratoire : hooks hardware (ESP32)", false],
+      ["Capture / carte de son chat", false],
+      ["Carte de score partageable", false],
+      ["Liens de partage (état encodé)", false],
     ],
   },
 ];
 
 // --- Rendu ------------------------------------------------------------------
 const grid = document.getElementById("grid");
-let totalTasks = 0, doneTasks = 0, doneSprints = 0;
+let totalTasks = 0, doneTasks = 0, doneLots = 0;
 
 for (const s of SPRINTS) {
   const done = s.tasks.filter(t => t[1]).length;
   const pct = s.tasks.length ? Math.round(done / s.tasks.length * 100) : 0;
   totalTasks += s.tasks.length; doneTasks += done;
-  if (s.status === "done") doneSprints++;
+  if (s.status === "done") doneLots++;
 
   const card = document.createElement("div");
   card.className = "sprint" + (s.status === "active" ? " active" : "");
   card.innerHTML = `
     <div class="s-head">
-      <span class="s-num">S${s.n}</span>
+      <span class="s-num">${s.n}</span>
       <span class="s-title">${s.title}</span>
       <span class="status ${s.status}">${s.status === "done" ? "Fait" : s.status === "active" ? "En cours" : "À venir"}</span>
     </div>
@@ -242,7 +217,7 @@ const ovPct = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
 document.getElementById("ov-pct").textContent = ovPct + "%";
 document.getElementById("ov-bar").style.width = ovPct + "%";
 document.getElementById("ov-tasks").textContent = `${doneTasks} / ${totalTasks} tâches`;
-document.getElementById("ov-sprints").textContent = `${doneSprints} / ${SPRINTS.length} sprints`;
+document.getElementById("ov-sprints").textContent = `${doneLots} / ${SPRINTS.length} lots faits`;
 </script>
 </body>
 </html>
