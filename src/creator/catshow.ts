@@ -46,6 +46,9 @@ export class CatShow {
           const m = raw as THREE.MeshStandardMaterial;
           if (m && m.color) {
             m.color = m.color.clone();
+            // Aspect plus naturel / moins plastique (évite les halos de bloom).
+            if ('metalness' in m) m.metalness = 0;
+            if ('roughness' in m) m.roughness = Math.min(1, Math.max(0.6, m.roughness ?? 0.7));
             this.mats.push({ m, base: m.color.clone() });
           }
         }
@@ -85,7 +88,6 @@ export class CatShow {
     const cx = (b.min.x + b.max.x) / 2;
     const cz = (b.min.z + b.max.z) / 2;
     const top = b.max.y;
-    const front = b.max.z;
     const w = Math.max(b.max.x - b.min.x, 0.4);
 
     const accent = new THREE.MeshStandardMaterial({ color: c.accent, roughness: 0.5 });
@@ -149,30 +151,8 @@ export class CatShow {
       add(cone);
     }
 
-    if (c.collar) {
-      const neckY = b.min.y + (top - b.min.y) * 0.5;
-      const collar = new THREE.Mesh(new THREE.TorusGeometry(w * 0.42, w * 0.09, 12, 32), accent);
-      collar.position.set(cx, neckY, cz + (front - cz) * 0.35);
-      collar.rotation.x = Math.PI / 2 - 0.2;
-      add(collar);
-      const bell = new THREE.Mesh(new THREE.SphereGeometry(w * 0.1, 16, 16), gold);
-      bell.position.set(cx, neckY - w * 0.12, front);
-      add(bell);
-    }
-
-    if (c.glasses) {
-      const frame = new THREE.MeshStandardMaterial({
-        color: '#20202a',
-        roughness: 0.3,
-        metalness: 0.4,
-      });
-      const gy = top - (top - b.min.y) * 0.28;
-      for (const sx of [-w * 0.2, w * 0.2]) {
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(w * 0.16, w * 0.03, 10, 24), frame);
-        ring.position.set(cx + sx, gy, front);
-        add(ring);
-      }
-    }
+    // Collier / lunettes : placement fiable par modèle (anchors) à venir —
+    // désactivé pour l'instant pour ne pas gâcher le rendu.
   }
 
   update(dt: number): void {
