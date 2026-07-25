@@ -3,113 +3,53 @@
   import * as THREE from 'three';
   import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
   import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-  import { createCat, type CatModel } from '../../creator/cat3d';
+  import { CatShow } from '../../creator/catshow';
+  import { CAT_CATALOG } from '../../creator/catalog';
   import {
-    dna,
-    setDNA,
-    randomizeDNA,
-    applyFurPreset,
-    FUR_PRESETS,
-    type HatKind,
-  } from '../../customization/dna';
-  import { profile, finishCreation } from '../../state/app';
+    catConfig,
+    setCat,
+    setImportedGlb,
+    getImportedGlb,
+    type CatConfig,
+  } from '../../state/cat';
+  import type { HatKind } from '../../customization/dna';
+  import { finishCreation } from '../../state/app';
 
   let host!: HTMLDivElement;
   let canvas!: HTMLCanvasElement;
-  let name = $state($profile.name === 'Miaou' ? '' : $profile.name);
+  let fileInput!: HTMLInputElement;
+  let name = $state($catConfig.name);
+  let importErr = $state<string | null>(null);
+  let busy = $state(true);
 
   let renderer: THREE.WebGLRenderer;
   let scene: THREE.Scene;
   let camera: THREE.PerspectiveCamera;
   let controls: OrbitControls;
-  let cat: CatModel;
   let pmrem: THREE.PMREMGenerator;
+  let show: CatShow;
   let raf = 0;
   let ro: ResizeObserver;
   let unsub: () => void;
+  let currentBase = '';
 
-  let importedModel: THREE.Object3D | null = null;
-  let mixer: THREE.AnimationMixer | null = null;
-  let fileInput!: HTMLInputElement;
-  let importErr = $state<string | null>(null);
-  let importing = $state(false);
-
-  function placeModel(obj: THREE.Object3D, animations: THREE.AnimationClip[]) {
-    if (importedModel) scene.remove(importedModel);
-    mixer?.stopAllAction();
-    mixer = null;
-
-    const box = new THREE.Box3().setFromObject(obj);
-    const size = box.getSize(new THREE.Vector3());
-    const scale = 2.6 / Math.max(size.x, size.y, size.z || 1);
-    obj.scale.setScalar(scale);
-    const b2 = new THREE.Box3().setFromObject(obj);
-    const c2 = b2.getCenter(new THREE.Vector3());
-    obj.position.x -= c2.x;
-    obj.position.z -= c2.z;
-    obj.position.y -= b2.min.y;
-    obj.traverse((o) => {
-      if (o instanceof THREE.Mesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-      }
-    });
-    scene.add(obj);
-    importedModel = obj;
-    cat.group.visible = false;
-
-    if (animations.length) {
-      mixer = new THREE.AnimationMixer(obj);
-      mixer.clipAction(animations[0]).play();
-    }
-  }
-
-  function loadFile(f: File) {
+  async function loadBase(cfg: CatConfig) {
+    busy = true;
     importErr = null;
-    importing = true;
-    void f
-      .arrayBuffer()
-      .then((buf) => {
-        new GLTFLoader().parse(
-          buf,
-          '',
-          (g) => {
-            placeModel(g.scene, g.animations);
-            importing = false;
-          },
-          (err) => {
-            importErr = 'Modèle illisible (.glb / .gltf)';
-            importing = false;
-            console.error(err);
-          },
-        );
-      })
-      .catch(() => {
-        importErr = 'Lecture du fichier impossible';
-        importing = false;
-      });
-  }
-
-  function onImport(e: Event) {
-    const f = (e.target as HTMLInputElement).files?.[0];
-    if (f) loadFile(f);
-  }
-
-  function onDrop(e: DragEvent) {
-    e.preventDefault();
-    const f = e.dataTransfer?.files?.[0];
-    if (f) loadFile(f);
-  }
-
-  function useDefaultCat() {
-    if (importedModel) {
-      scene.remove(importedModel);
-      importedModel = null;
+    try {
+      if (cfg.base === 'imported') {
+        const buf = await getImportedGlb();
+        if (buf) await show.loadBuffer(buf);
+        else await show.loadUrl(CAT_CATALOG[0].url);
+      } else {
+        await show.loadUrl(cfg.base);
+      }
+      show.applyLook(cfg);
+    } catch (e) {
+      importErr = 'Modèle illisible';
+      console.error(e);
     }
-    mixer?.stopAllAction();
-    mixer = null;
-    cat.group.visible = true;
+    busy = false;
   }
 
   function resize() {
@@ -118,6 +58,25 @@
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+  }
+
+  function onFile(file: File) {
+    importErr = null;
+    busy = true;
+    void file
+      .arrayBuffer()
+      .then(async (buf) => {
+        await setImportedGlb(buf);
+        currentBase = 'imported';
+        await show.loadBuffer(buf);
+        show.applyLook($catConfig);
+        setCat('base', 'imported');
+        busy = false;
+      })
+      .catch(() => {
+        importErr = 'Lecture impossible';
+        busy = false;
+      });
   }
 
   onMount(() => {
@@ -134,24 +93,24 @@
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
     camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-    camera.position.set(0.5, 2.6, 6.4);
+    camera.position.set(0.6, 2.4, 6.6);
 
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 1.7, 0);
+    controls.target.set(0, 1.25, 0);
     controls.enablePan = false;
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.minDistance = 4.2;
-    controls.maxDistance = 9;
-    controls.minPolarAngle = 0.7;
-    controls.maxPolarAngle = 1.55;
+    controls.minDistance = 3.5;
+    controls.maxDistance = 10;
+    controls.minPolarAngle = 0.6;
+    controls.maxPolarAngle = 1.62;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.0;
+    controls.autoRotateSpeed = 0.9;
 
     const key = new THREE.DirectionalLight(0xffffff, 2.4);
     key.position.set(4, 8, 5);
     key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.mapSize.set(2048, 2048);
     key.shadow.bias = -0.0003;
     key.shadow.camera.near = 1;
     key.shadow.camera.far = 30;
@@ -162,17 +121,25 @@
     const rim = new THREE.DirectionalLight(0xffd9a0, 0.9);
     rim.position.set(-1, 5, -6);
     scene.add(rim);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.1));
 
-    const podium = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.5, 2.75, 0.35, 64),
-      new THREE.MeshStandardMaterial({ color: '#241d3c', roughness: 0.55, metalness: 0.15 }),
+    // Sol + anneau (showroom).
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(6, 64),
+      new THREE.MeshStandardMaterial({ color: '#1c1730', roughness: 0.85 }),
     );
-    podium.position.y = -0.17;
-    podium.receiveShadow = true;
-    scene.add(podium);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    const disc = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.3, 2.45, 0.18, 64),
+      new THREE.MeshStandardMaterial({ color: '#2a2340', roughness: 0.5, metalness: 0.2 }),
+    );
+    disc.position.y = 0.09;
+    disc.receiveShadow = true;
+    scene.add(disc);
     const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(2.55, 0.06, 16, 80),
+      new THREE.TorusGeometry(2.35, 0.05, 16, 90),
       new THREE.MeshStandardMaterial({
         color: '#7b5cff',
         roughness: 0.3,
@@ -180,21 +147,27 @@
         emissive: '#3a2a86',
       }),
     );
-    ring.position.y = 0.02;
+    ring.position.y = 0.19;
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
 
-    cat = createCat();
-    scene.add(cat.group);
-    unsub = dna.subscribe((d) => cat?.update(d)); // fire immédiat = update initial
+    show = new CatShow();
+    show.group.position.y = 0.18;
+    scene.add(show.group);
 
-    // Charge un vrai modèle 3D de chat par défaut, au lieu de la géométrie.
-    new GLTFLoader().load(
-      '/models/cat.glb',
-      (g) => placeModel(g.scene, g.animations),
-      undefined,
-      (e) => console.warn('modèle par défaut indisponible', e),
-    );
+    currentBase = $catConfig.base;
+    void loadBase($catConfig);
+
+    // Le look s'applique en direct ; on ne recharge que si la base change.
+    unsub = catConfig.subscribe((cfg) => {
+      if (!show) return;
+      if (cfg.base !== currentBase) {
+        currentBase = cfg.base;
+        void loadBase(cfg);
+      } else {
+        show.applyLook(cfg);
+      }
+    });
 
     ro = new ResizeObserver(resize);
     ro.observe(host);
@@ -202,8 +175,7 @@
 
     const clock = new THREE.Clock();
     const loop = () => {
-      const dt = clock.getDelta();
-      mixer?.update(dt);
+      show?.update(clock.getDelta());
       controls.update();
       renderer.render(scene, camera);
       raf = requestAnimationFrame(loop);
@@ -215,7 +187,7 @@
     cancelAnimationFrame(raf);
     ro?.disconnect();
     unsub?.();
-    cat?.dispose();
+    show?.dispose();
     controls?.dispose();
     pmrem?.dispose();
     renderer?.dispose();
@@ -227,125 +199,81 @@
     class="viewport"
     bind:this={host}
     ondragover={(e) => e.preventDefault()}
-    ondrop={onDrop}
+    ondrop={(e) => {
+      e.preventDefault();
+      const f = e.dataTransfer?.files?.[0];
+      if (f) onFile(f);
+    }}
     role="presentation"
   >
     <canvas bind:this={canvas}></canvas>
     <div class="title">
       <h1>Crée ton chat</h1>
-      <p>Glisse pour tourner autour · dépose un <b>.glb</b> pour ton vrai chat</p>
+      <p>Glisse pour tourner autour · dépose un <b>.glb</b> pour importer le tien</p>
     </div>
-    {#if importing}
-      <div class="loading">⏳ Chargement du modèle…</div>
-    {/if}
+    {#if busy}<div class="loading">⏳ Chargement…</div>{/if}
   </div>
 
   <aside class="panel">
+    <div class="section">Galerie</div>
+    <div class="gallery">
+      {#each CAT_CATALOG as c (c.slug)}
+        <button
+          class="cat-card"
+          class:active={$catConfig.base === c.url}
+          onclick={() => setCat('base', c.url)}
+        >
+          🐱<span>{c.name}</span>
+        </button>
+      {/each}
+      <button class="cat-card import" onclick={() => fileInput.click()}
+        >📁<span>Le mien</span></button
+      >
+    </div>
+    <input
+      type="file"
+      accept=".glb,.gltf,model/gltf-binary"
+      bind:this={fileInput}
+      onchange={(e) => {
+        const f = (e.target as HTMLInputElement).files?.[0];
+        if (f) onFile(f);
+      }}
+      style="display:none"
+    />
+    {#if importErr}<span class="err">{importErr}</span>{/if}
+
     <label class="name">
       Nom
       <input type="text" bind:value={name} maxlength="16" placeholder="Ex : Pixel, Mochi…" />
     </label>
 
-    <div class="section">Mon vrai chat (réaliste)</div>
-    <input
-      type="file"
-      accept=".glb,.gltf,model/gltf-binary"
-      bind:this={fileInput}
-      onchange={onImport}
-      style="display:none"
-    />
-    <div class="btns" style="margin-top:0">
-      <button class="ghost" style="flex:1" onclick={() => fileInput.click()}
-        >📁 Importer un modèle</button
-      >
-      <button class="ghost" onclick={useDefaultCat} title="Revenir au chat stylisé">↩︎</button>
-    </div>
-    {#if importErr}<span class="err">{importErr}</span>{/if}
-    <p class="hint3d">
-      Génère le <b>.glb</b> de ton chat depuis sa photo (Meshy / Tripo), importe-le : il s'affiche en
-      3D texturé et, s'il est animé, l'animation se joue.
-    </p>
-
-    <div class="section">Robe</div>
-    <div class="presets">
-      {#each FUR_PRESETS as p (p.name)}
-        <button
-          class="preset"
-          style="--c:{p.furB}"
-          class:active={$dna.furB === p.furB}
-          onclick={() => applyFurPreset(p)}>{p.name}</button
-        >
-      {/each}
-    </div>
-
-    <div class="section">Couleurs</div>
-    <div class="colors">
-      <label
-        ><input
-          type="color"
-          value={$dna.furB}
-          oninput={(e) => setDNA('furB', (e.target as HTMLInputElement).value)}
-        /> Pelage</label
-      >
-      <label
-        ><input
-          type="color"
-          value={$dna.eye}
-          oninput={(e) => setDNA('eye', (e.target as HTMLInputElement).value)}
-        /> Yeux</label
-      >
-      <label
-        ><input
-          type="color"
-          value={$dna.accent}
-          oninput={(e) => setDNA('accent', (e.target as HTMLInputElement).value)}
-        /> Truffe</label
-      >
-    </div>
-
-    <div class="section">Morphologie</div>
-    <label class="slider"
-      >Corpulence <b>{$dna.bodySize.toFixed(2)}</b>
+    <div class="section">Teinte</div>
+    <div class="tintrow">
+      <input
+        type="color"
+        value={$catConfig.tint}
+        oninput={(e) => setCat('tint', (e.target as HTMLInputElement).value)}
+      />
       <input
         type="range"
-        min="0.75"
-        max="1.35"
-        step="0.01"
-        value={$dna.bodySize}
-        oninput={(e) => setDNA('bodySize', +(e.target as HTMLInputElement).value)}
-      /></label
-    >
-    <label class="slider"
-      >Oreilles <b>{$dna.earSize.toFixed(2)}</b>
-      <input
-        type="range"
-        min="0.6"
-        max="1.4"
-        step="0.01"
-        value={$dna.earSize}
-        oninput={(e) => setDNA('earSize', +(e.target as HTMLInputElement).value)}
-      /></label
-    >
-    <label class="slider"
-      >Truffe <b>{$dna.noseSize.toFixed(2)}</b>
-      <input
-        type="range"
-        min="0.6"
-        max="1.6"
-        step="0.01"
-        value={$dna.noseSize}
-        oninput={(e) => setDNA('noseSize', +(e.target as HTMLInputElement).value)}
-      /></label
-    >
-    <label class="slider"
-      >Rondeur <b>{$dna.roundness.toFixed(2)}</b>
-      <input
-        type="range"
-        min="-1"
+        min="0"
         max="1"
         step="0.01"
-        value={$dna.roundness}
-        oninput={(e) => setDNA('roundness', +(e.target as HTMLInputElement).value)}
+        value={$catConfig.tintAmount}
+        oninput={(e) => setCat('tintAmount', +(e.target as HTMLInputElement).value)}
+      />
+    </div>
+
+    <div class="section">Corpulence</div>
+    <label class="slider"
+      ><b>{$catConfig.scale.toFixed(2)}</b>
+      <input
+        type="range"
+        min="0.7"
+        max="1.4"
+        step="0.01"
+        value={$catConfig.scale}
+        oninput={(e) => setCat('scale', +(e.target as HTMLInputElement).value)}
       /></label
     >
 
@@ -353,8 +281,8 @@
     <label class="row"
       >Chapeau
       <select
-        value={$dna.hat}
-        onchange={(e) => setDNA('hat', (e.target as HTMLSelectElement).value as HatKind)}
+        value={$catConfig.hat}
+        onchange={(e) => setCat('hat', (e.target as HTMLSelectElement).value as HatKind)}
       >
         <option value="none">Aucun</option>
         <option value="tophat">Haut-de-forme</option>
@@ -366,22 +294,33 @@
     <label class="check"
       ><input
         type="checkbox"
-        checked={$dna.collar}
-        onchange={(e) => setDNA('collar', (e.target as HTMLInputElement).checked)}
+        checked={$catConfig.collar}
+        onchange={(e) => setCat('collar', (e.target as HTMLInputElement).checked)}
       /> Collier</label
     >
     <label class="check"
       ><input
         type="checkbox"
-        checked={$dna.glasses}
-        onchange={(e) => setDNA('glasses', (e.target as HTMLInputElement).checked)}
+        checked={$catConfig.glasses}
+        onchange={(e) => setCat('glasses', (e.target as HTMLInputElement).checked)}
       /> Lunettes</label
     >
-
-    <div class="btns">
-      <button class="ghost" onclick={randomizeDNA}>🎲</button>
-      <button class="adopt" onclick={() => finishCreation(name)}>Adopter →</button>
+    <div class="acc-color">
+      Couleur accessoires
+      <input
+        type="color"
+        value={$catConfig.accent}
+        oninput={(e) => setCat('accent', (e.target as HTMLInputElement).value)}
+      />
     </div>
+
+    <button
+      class="adopt"
+      onclick={() => {
+        setCat('name', name);
+        finishCreation(name);
+      }}>Adopter →</button
+    >
   </aside>
 </div>
 
@@ -396,7 +335,7 @@
     flex: 1;
     position: relative;
     min-width: 0;
-    background: radial-gradient(60% 60% at 50% 35%, #3a2f5e, #1a1530 70%), #14101f;
+    background: radial-gradient(60% 60% at 50% 38%, #3a2f5e, #17122b 72%), #100c1c;
   }
   canvas {
     display: block;
@@ -419,16 +358,65 @@
     color: var(--muted);
     font-size: 13px;
   }
+  .loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: rgba(15, 12, 30, 0.85);
+    border: 1px solid var(--stroke);
+    font-weight: 600;
+  }
   .panel {
-    width: 300px;
+    width: 310px;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 11px;
-    background: rgba(15, 12, 30, 0.7);
+    background: rgba(15, 12, 30, 0.72);
     border-left: 1px solid var(--stroke);
-    backdrop-filter: blur(14px);
+    backdrop-filter: blur(16px);
     overflow-y: auto;
+  }
+  .section {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--brand-2);
+    margin-top: 4px;
+  }
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .cat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 4px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .cat-card span {
+    opacity: 0.85;
+  }
+  .cat-card:hover {
+    background: color-mix(in srgb, var(--brand) 22%, var(--surface-2));
+  }
+  .cat-card.active {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 1px var(--brand);
+  }
+  .cat-card.import {
+    background: color-mix(in srgb, var(--brand) 18%, var(--surface-2));
   }
   .name {
     display: flex;
@@ -446,55 +434,16 @@
     color: var(--text);
     font-size: 15px;
   }
-  .section {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--brand-2);
-    margin-top: 6px;
-  }
-  .presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .preset {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px 6px 8px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    border: 1px solid var(--stroke);
-    color: var(--text);
-    font-size: 12px;
-  }
-  .preset::before {
-    content: '';
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--c);
-  }
-  .preset.active {
-    border-color: var(--brand);
-    box-shadow: 0 0 0 1px var(--brand);
-  }
-  .colors {
+  .tintrow {
     display: flex;
     gap: 8px;
-  }
-  .colors label {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: var(--muted);
+  }
+  .tintrow input[type='range'] {
+    flex: 1;
   }
   input[type='color'] {
-    width: 100%;
+    width: 42px;
     height: 30px;
     padding: 1px;
     border: 1px solid var(--stroke);
@@ -509,7 +458,7 @@
     color: var(--muted);
   }
   .slider b {
-    float: right;
+    align-self: flex-end;
     color: var(--text);
   }
   input[type='range'] {
@@ -542,49 +491,26 @@
     height: 16px;
     accent-color: var(--brand);
   }
-  .btns {
+  .acc-color {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  .ghost {
-    width: 46px;
-    border-radius: 12px;
-    background: var(--surface-2);
-    border: 1px solid var(--stroke);
-    font-size: 18px;
-  }
-  .adopt {
-    flex: 1;
-    padding: 13px;
-    border-radius: 12px;
-    border: none;
-    font-weight: 800;
-    color: #fff;
-    background: linear-gradient(135deg, var(--brand), #4636b8);
-    box-shadow: 0 8px 24px rgba(123, 92, 255, 0.45);
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
   }
   .err {
     color: #ff8a8a;
     font-size: 12px;
   }
-  .hint3d {
-    margin: 4px 0 0;
-    font-size: 11px;
-    line-height: 1.5;
-    color: var(--muted);
-  }
-  .loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 12px 20px;
+  .adopt {
+    margin-top: 10px;
+    padding: 14px;
     border-radius: 12px;
-    background: rgba(15, 12, 30, 0.85);
-    border: 1px solid var(--stroke);
-    color: var(--text);
-    font-weight: 600;
-    z-index: 5;
+    border: none;
+    font-weight: 800;
+    font-size: 15px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand), #4636b8);
+    box-shadow: 0 8px 24px rgba(123, 92, 255, 0.45);
   }
 </style>
