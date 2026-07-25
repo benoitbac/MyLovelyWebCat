@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import Home from './ui/screens/Home.svelte';
+  import World from './ui/screens/World.svelte';
   import Creator from './ui/screens/Creator.svelte';
   import GameScene from './ui/GameScene.svelte';
   import { screen, startApp } from './state/app';
@@ -20,7 +20,7 @@
   {:else if $screen === 'game'}
     <GameScene />
   {:else}
-    <Home />
+    <World />
   {/if}
 </main>
 
