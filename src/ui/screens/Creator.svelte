@@ -3,6 +3,10 @@
   import * as THREE from 'three';
   import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
   import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+  import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+  import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+  import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+  import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
   import { CatShow } from '../../creator/catshow';
   import { CAT_CATALOG } from '../../creator/catalog';
   import {
@@ -27,6 +31,7 @@
   let camera: THREE.PerspectiveCamera;
   let controls: OrbitControls;
   let pmrem: THREE.PMREMGenerator;
+  let composer: EffectComposer;
   let show: CatShow;
   let raf = 0;
   let ro: ResizeObserver;
@@ -56,6 +61,7 @@
     const w = host.clientWidth;
     const h = host.clientHeight;
     renderer.setSize(w, h, false);
+    composer?.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
@@ -133,7 +139,7 @@
     scene.add(ground);
     const disc = new THREE.Mesh(
       new THREE.CylinderGeometry(2.3, 2.45, 0.18, 64),
-      new THREE.MeshStandardMaterial({ color: '#2a2340', roughness: 0.5, metalness: 0.2 }),
+      new THREE.MeshStandardMaterial({ color: '#15112a', roughness: 0.12, metalness: 0.85 }),
     );
     disc.position.y = 0.09;
     disc.receiveShadow = true;
@@ -144,12 +150,21 @@
         color: '#7b5cff',
         roughness: 0.3,
         metalness: 0.4,
-        emissive: '#3a2a86',
+        emissive: '#7b5cff',
+        emissiveIntensity: 2.2,
       }),
     );
     ring.position.y = 0.19;
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
+
+    // Post-traitement : bloom (glow premium sur l'anneau / les reflets).
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(
+      new UnrealBloomPass(new THREE.Vector2(host.clientWidth, host.clientHeight), 0.5, 0.5, 0.9),
+    );
+    composer.addPass(new OutputPass());
 
     show = new CatShow();
     show.group.position.y = 0.18;
@@ -177,7 +192,7 @@
     const loop = () => {
       show?.update(clock.getDelta());
       controls.update();
-      renderer.render(scene, camera);
+      composer.render();
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -291,20 +306,6 @@
         <option value="party">Fête</option>
       </select>
     </label>
-    <label class="check"
-      ><input
-        type="checkbox"
-        checked={$catConfig.collar}
-        onchange={(e) => setCat('collar', (e.target as HTMLInputElement).checked)}
-      /> Collier</label
-    >
-    <label class="check"
-      ><input
-        type="checkbox"
-        checked={$catConfig.glasses}
-        onchange={(e) => setCat('glasses', (e.target as HTMLInputElement).checked)}
-      /> Lunettes</label
-    >
     <div class="acc-color">
       Couleur accessoires
       <input
@@ -478,18 +479,6 @@
     background: rgba(0, 0, 0, 0.35);
     border: 1px solid var(--stroke);
     color: var(--text);
-  }
-  .check {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--text);
-  }
-  .check input {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--brand);
   }
   .acc-color {
     display: flex;
