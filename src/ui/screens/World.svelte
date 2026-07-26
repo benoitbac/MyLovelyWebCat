@@ -7,7 +7,8 @@
   import { catConfig, getImportedGlb } from '../../state/cat';
   import { ready } from '../../game/wasm';
   import { Life } from '../../wasm/miaou_engine';
-  import { profile, go } from '../../state/app';
+  import { profile, go, addCoins } from '../../state/app';
+  import { earnFromCare, SHOP, buy, type CareKind } from '../../state/economy';
   import { kvGet, kvSet } from '../../state/db';
 
   let host!: HTMLDivElement;
@@ -19,6 +20,35 @@
   let joy = $state(68);
   let hygiene = $state(75);
 
+  // Économie : toasts de gain, boutique, dividende « ronron »
+  let toasts = $state<{ id: number; text: string; big: boolean }[]>([]);
+  let shopOpen = $state(false);
+  let purrAcc = 0;
+  let toastId = 0;
+
+  function toast(text: string, big = false) {
+    const id = ++toastId;
+    toasts = [...toasts, { id, text, big }];
+    setTimeout(() => (toasts = toasts.filter((t) => t.id !== id)), 1400);
+  }
+
+  function doCare(kind: CareKind, fn: () => void) {
+    fn();
+    const r = earnFromCare(kind, { hunger, energy, joy, hygiene });
+    toast(`+${r.coins} 🪙${r.streak >= 3 ? ` ·×${r.streak}` : ''}`);
+    if (r.daily) setTimeout(() => toast('Bonus du jour +25 🪙 ✨', true), 220);
+  }
+
+  function buyItem(item: (typeof SHOP)[number]) {
+    if (!life) return;
+    if (buy(item, life)) {
+      toast(`${item.icon} ${item.name}`);
+      shopOpen = false;
+    } else {
+      toast('Pas assez de 🪙');
+    }
+  }
+
   let renderer: THREE.WebGLRenderer;
   let scene: THREE.Scene;
   let camera: THREE.PerspectiveCamera;
@@ -29,6 +59,7 @@
   let hemi: THREE.HemisphereLight;
   let raf = 0;
   let ro: ResizeObserver;
+  let disposed = false; // le composant peut être détruit pendant un await du montage
 
   // Déplacement + caméra
   const catPos = new THREE.Vector3(0, 0, 0);
@@ -223,12 +254,15 @@
     show = new CatShow();
     scene.add(show.group);
     await ready();
+    if (disposed) return;
     life = new Life((Math.floor(Math.random() * 4294967295) + 1) >>> 0);
     const saved = await kvGet<{ hunger: number; energy: number; joy: number; hygiene: number }>(
       'life',
     );
+    if (disposed) return; // détruit pendant l'await : ne pas toucher un life peut-être libéré
     if (saved) life.load(saved.hunger, saved.energy, saved.joy, saved.hygiene, 0);
     await loadCat();
+    if (disposed) return;
 
     ro = new ResizeObserver(resize);
     ro.observe(host);
@@ -245,6 +279,19 @@
         energy = life.energy;
         joy = life.joy;
         hygiene = life.hygiene;
+
+        // Dividende « ronron » : un chat comblé rapporte un peu, tout seul.
+        if (hunger > 70 && energy > 70 && joy > 70 && hygiene > 70) {
+          purrAcc += dt;
+          if (purrAcc >= 15) {
+            purrAcc = 0;
+            addCoins(1);
+            toast('ronron +1 🪙');
+          }
+        } else {
+          purrAcc = 0;
+        }
+
         const { sky, day, el } = skyColors(life.clock);
         scene.background = sky;
         if (scene.fog) (scene.fog as THREE.Fog).color.copy(sky);
@@ -294,6 +341,7 @@
   });
 
   onDestroy(() => {
+    disposed = true;
     cancelAnimationFrame(raf);
     ro?.disconnect();
     if (life) void kvSet('life', { hunger, energy, joy, hygiene });
@@ -309,11 +357,11 @@
     { icon: '💜', v: joy },
     { icon: '🛁', v: hygiene },
   ]);
-  const actions = [
-    { icon: '🍽️', label: 'Nourrir', fn: () => life?.feed() },
-    { icon: '🫶', label: 'Câliner', fn: () => life?.cuddle() },
-    { icon: '🧶', label: 'Jouer', fn: () => life?.toy() },
-    { icon: '🛁', label: 'Laver', fn: () => life?.clean() },
+  const actions: { icon: string; label: string; kind: CareKind; fn: () => void }[] = [
+    { icon: '🍽️', label: 'Nourrir', kind: 'feed', fn: () => life?.feed() },
+    { icon: '🫶', label: 'Câliner', kind: 'cuddle', fn: () => life?.cuddle() },
+    { icon: '🧶', label: 'Jouer', kind: 'toy', fn: () => life?.toy() },
+    { icon: '🛁', label: 'Laver', kind: 'clean', fn: () => life?.clean() },
   ];
 </script>
 
@@ -346,11 +394,55 @@
 
   <nav class="dock">
     {#each actions as a (a.label)}
-      <button class="act" onclick={a.fn}><span>{a.icon}</span>{a.label}</button>
+      <button class="act" onclick={() => doCare(a.kind, a.fn)}><span>{a.icon}</span>{a.label}</button>
     {/each}
+    <button class="act shop" onclick={() => (shopOpen = true)} title="Boutique">
+      <span>🛒</span>Boutique
+    </button>
     <button class="play" onclick={() => go('game')}>🎮 Jouer</button>
     <button class="ghost" onclick={() => go('create')} title="Créateur">🎨</button>
   </nav>
+
+  <div class="toasts">
+    {#each toasts as t (t.id)}
+      <div class="toast" class:big={t.big}>{t.text}</div>
+    {/each}
+  </div>
+
+  {#if shopOpen}
+    <div class="shop-back" role="presentation" onpointerdown={() => (shopOpen = false)}>
+      <div
+        class="shop"
+        role="dialog"
+        aria-label="Boutique"
+        tabindex="-1"
+        onpointerdown={(e) => e.stopPropagation()}
+      >
+        <header class="shop-top">
+          <h2>🛒 Boutique</h2>
+          <div class="bal">🪙 {$profile.coins.toLocaleString('fr-FR')}</div>
+          <button class="x" onclick={() => (shopOpen = false)} aria-label="Fermer">✕</button>
+        </header>
+        <p class="shop-sub">Des gâteries qui comblent plusieurs besoins d'un coup.</p>
+        <div class="items">
+          {#each SHOP as item (item.id)}
+            <button
+              class="item"
+              class:off={$profile.coins < item.cost}
+              onclick={() => buyItem(item)}
+            >
+              <span class="ic">{item.icon}</span>
+              <span class="body">
+                <b>{item.name}</b>
+                <small>{item.desc}</small>
+              </span>
+              <span class="price">🪙 {item.cost}</span>
+            </button>
+          {/each}
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -492,5 +584,154 @@
     background: var(--surface-2);
     border: 1px solid var(--stroke);
     font-size: 16px;
+  }
+  .shop {
+    color: var(--gold);
+  }
+
+  /* Toasts de gain */
+  .toasts {
+    position: absolute;
+    top: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+  .toast {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--gold);
+    background: rgba(10, 8, 22, 0.7);
+    border: 1px solid var(--stroke);
+    backdrop-filter: blur(8px);
+    animation: rise 1.4s ease-out forwards;
+  }
+  .toast.big {
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand), #4636b8);
+    border-color: transparent;
+    font-size: 16px;
+  }
+  @keyframes rise {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.9);
+    }
+    18% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-14px);
+    }
+  }
+
+  /* Boutique */
+  .shop-back {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(4, 3, 10, 0.55);
+    backdrop-filter: blur(4px);
+  }
+  .shop {
+    width: min(440px, 92%);
+    max-height: 82%;
+    overflow-y: auto;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    color: var(--text);
+  }
+  .shop-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .shop-top h2 {
+    margin: 0;
+    font-size: 20px;
+    flex: 1;
+  }
+  .bal {
+    font-weight: 800;
+    color: var(--gold);
+  }
+  .x {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .shop-sub {
+    margin: 6px 0 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--stroke);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      transform 0.08s ease,
+      border-color 0.2s ease;
+  }
+  .item:hover {
+    border-color: color-mix(in srgb, var(--brand) 55%, var(--stroke));
+  }
+  .item:active {
+    transform: scale(0.98);
+  }
+  .item.off {
+    opacity: 0.5;
+  }
+  .item .ic {
+    font-size: 28px;
+  }
+  .item .body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .item .body small {
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .item .price {
+    font-weight: 800;
+    color: var(--gold);
+    white-space: nowrap;
   }
 </style>

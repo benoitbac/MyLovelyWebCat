@@ -12,9 +12,19 @@ export interface Profile {
   created: boolean;
   name: string;
   coins: number;
+  careStreak: number; // soins enchaînés (série en cours)
+  lastCareTs: number; // horodatage du dernier soin (pour rompre la série)
+  lastCareDay: string; // jour du dernier bonus quotidien (YYYY-MM-DD)
 }
 
-const DEFAULT: Profile = { created: false, name: 'Miaou', coins: 0 };
+const DEFAULT: Profile = {
+  created: false,
+  name: 'Miaou',
+  coins: 0,
+  careStreak: 0,
+  lastCareTs: 0,
+  lastCareDay: '',
+};
 
 export const profile = writable<Profile>({ ...DEFAULT });
 
@@ -32,6 +42,17 @@ export function go(s: Screen): void {
 
 export function addCoins(n: number): void {
   profile.update((p) => ({ ...p, coins: p.coins + n }));
+}
+
+/** Débite le portefeuille si le solde suffit. Renvoie false sinon (rien débité). */
+export function spendCoins(n: number): boolean {
+  let ok = false;
+  profile.update((p) => {
+    if (p.coins < n) return p;
+    ok = true;
+    return { ...p, coins: p.coins - n };
+  });
+  return ok;
 }
 
 export function finishCreation(name: string): void {
