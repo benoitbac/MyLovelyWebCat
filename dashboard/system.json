@@ -1,0 +1,73 @@
+{
+  "summary": "Trois couches : un moteur Rust/WASM pour la simulation, un backend .NET/SignalR pour le réseau, et un client web Svelte/Three.js.",
+  "stack": "Rust · WebAssembly · .NET 9 · SignalR · Svelte 5 · TypeScript · Three.js · Vite",
+  "layers": [
+    {
+      "name": "Moteur",
+      "desc": "simulation & gameplay, compilés en WebAssembly",
+      "bricks": [
+        {
+          "title": "engine",
+          "path": "engine/src/",
+          "role": "Crate Rust : besoins, humeur et cycle de vie du chat (life.rs), plus la logique des mini-jeux. Compilé en WASM.",
+          "ports": ["rust", "wasm"]
+        },
+        {
+          "title": "wasm bridge",
+          "path": "src/game/wasm.ts",
+          "role": "Binding fin entre le module WASM et le client : chargement, appels de tick, échange d'état.",
+          "ports": ["ts"]
+        }
+      ]
+    },
+    {
+      "name": "Réseau",
+      "desc": "présence multijoueur au bureau",
+      "bricks": [
+        {
+          "title": "server",
+          "path": "server/",
+          "role": "ASP.NET Core 9 + SignalR. ArenaHub gère la présence et la réplication de position pour croiser les chats des collègues.",
+          "ports": ["dotnet", "signalr"]
+        }
+      ]
+    },
+    {
+      "name": "Client",
+      "desc": "créateur, monde 3D et interface",
+      "bricks": [
+        {
+          "title": "creator",
+          "path": "src/creator/",
+          "role": "Créateur façon GTA : orbite autour du chat 3D, galerie de modèles, import photo, teinte et morpho.",
+          "ports": ["three", "gltf"]
+        },
+        {
+          "title": "world / render",
+          "path": "src/game/render.ts",
+          "role": "Monde 3D parcourable : caméra 3e personne, cycle jour/nuit, pile Three.js (bloom, ACES, ombres).",
+          "ports": ["three"]
+        },
+        {
+          "title": "companion",
+          "path": "src/companion/",
+          "role": "Boucle compagnon : besoins, humeur, soin. Fait le pont entre l'état WASM et l'interface.",
+          "ports": ["ts"]
+        },
+        {
+          "title": "ui / state",
+          "path": "src/ui/ · src/state/",
+          "role": "Écrans Svelte 5 (runes, routeur) et état persistant en IndexedDB.",
+          "ports": ["svelte", "indexeddb"]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    { "from": "engine", "to": "wasm bridge", "label": "compilé en .wasm, chargé au boot" },
+    { "from": "companion", "to": "wasm bridge", "label": "tick de simulation / lecture d'état" },
+    { "from": "creator", "to": "world / render", "label": "chat choisi passé au monde" },
+    { "from": "world / render", "to": "server", "label": "position poussée en SignalR" },
+    { "from": "ui / state", "to": "companion", "label": "actions de soin, sauvegarde" }
+  ]
+}

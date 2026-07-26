@@ -1,95 +1,106 @@
 {
-  "project": "Miaou",
-  "tagline": "A GTA-like 3D game of life for cats — create your cat, raise it, and share your world.",
+  "epic": "Miaou — un vrai jeu de la vie félin en 3D, façon GTA, jouable dans le navigateur",
+  "goal": "Créer son chat (galerie de vrais modèles ou photo → 3D), l'élever dans un monde 3D vivant, jouer à des mini-jeux, et croiser les chats des collègues en multijoueur. Stack Rust/WASM + .NET/SignalR + Three.js, sans installation.",
   "updated": "2026-07-26",
-  "currentSprint": "S4",
   "sprints": [
     {
       "id": "S1",
-      "name": "Foundations",
-      "goal": "Rust/WASM simulation engine, .NET/SignalR backend and the Svelte web shell.",
       "start": "2026-07-24",
       "end": "2026-07-26",
-      "status": "done",
-      "items": [
-        { "title": "Rust engine → WebAssembly pipeline", "state": "done", "note": "wasm-pack build --target web, versioned output in src/wasm" },
-        { "title": ".NET 9 + SignalR backend", "state": "done", "note": "ArenaHub, builds and runs headless" },
-        { "title": "Svelte 5 + TypeScript + Vite shell", "state": "done", "note": "Runes, screen router, IndexedDB kv store" },
-        { "title": "Three.js render stack", "state": "done", "note": "PMREM env, EffectComposer + bloom, ACES tone mapping, soft shadows" },
-        { "title": "Local-first persistence", "state": "done", "note": "IndexedDB, saved cat survives reload" }
+      "title": "Socle technique",
+      "goal": "Poser le moteur de simulation, le backend réseau et la coquille web.",
+      "tasks": [
+        { "id": "T1.1", "title": "Moteur de simulation Rust → WebAssembly (wasm-pack, sortie versionnée)", "status": "done" },
+        { "id": "T1.2", "title": "Backend .NET 9 + SignalR (ArenaHub, tourne headless)", "status": "done" },
+        { "id": "T1.3", "title": "Coquille web Svelte 5 + TypeScript + Vite (runes, routeur, IndexedDB)", "status": "done" },
+        { "id": "T1.4", "title": "Pile de rendu Three.js (env PMREM, bloom, ACES, ombres douces)", "status": "done" },
+        { "id": "T1.5", "title": "Persistance locale IndexedDB (le chat sauvé survit au reload)", "status": "done" }
       ]
     },
     {
       "id": "S2",
-      "name": "Cat Creator",
-      "goal": "A GTA-style creator: orbit a real 3D cat, pick from a gallery, import your own.",
       "start": "2026-07-25",
       "end": "2026-07-26",
-      "status": "done",
-      "items": [
-        { "title": "Orbit camera around a 3D cat", "state": "done", "note": "OrbitControls, turntable framing" },
-        { "title": "Gallery of real CC cat models", "state": "done", "note": "Poly Pizza CC-BY glb, credited in CREDITS.md" },
-        { "title": "Photo → 3D import path", "state": "done", "note": "Hunyuan3D/Tripo → .glb ingestion" },
-        { "title": "Tint, corpulence, accessories", "state": "done" },
-        { "title": "Free + premium adoption flow", "state": "done" }
+      "title": "Créateur de chat",
+      "goal": "Un créateur façon GTA : tourner autour d'un vrai chat 3D, en choisir un, importer le sien.",
+      "tasks": [
+        { "id": "T2.1", "title": "Caméra orbitale autour d'un chat 3D (façon GTA)", "status": "done" },
+        { "id": "T2.2", "title": "Galerie de vrais modèles de chats CC (Poly Pizza CC-BY, crédités)", "status": "done" },
+        { "id": "T2.3", "title": "Import photo → 3D (Hunyuan3D/Tripo → .glb)", "status": "done" },
+        { "id": "T2.4", "title": "Teinte, corpulence, accessoires", "status": "done" },
+        { "id": "T2.5", "title": "Parcours d'adoption gratuit + premium", "status": "done" }
       ]
     },
     {
       "id": "S3",
-      "name": "The World",
-      "goal": "A walkable 3D world with third-person camera and a day/night cycle.",
       "start": "2026-07-26",
       "end": "2026-07-28",
-      "status": "done",
-      "items": [
-        { "title": "Third-person walkable cat", "state": "done", "note": "AnimationMixer locomotion" },
-        { "title": "GTA-style orbit/follow camera", "state": "done" },
-        { "title": "Day/night lighting cycle", "state": "done" },
-        { "title": "Environment + grounding", "state": "done" }
+      "title": "Le monde",
+      "goal": "Un monde 3D parcourable, caméra 3e personne, cycle jour/nuit.",
+      "tasks": [
+        { "id": "T3.1", "title": "Chat jouable à la 3e personne (AnimationMixer)", "status": "done" },
+        { "id": "T3.2", "title": "Caméra orbite/suivi façon GTA", "status": "done" },
+        { "id": "T3.3", "title": "Cycle d'éclairage jour/nuit", "status": "done" },
+        { "id": "T3.4", "title": "Environnement + ancrage au sol", "status": "done" }
       ]
     },
     {
       "id": "S4",
-      "name": "Game of Life",
-      "goal": "Needs, care and mini-games. The tamagotchi loop that makes the cat live.",
       "start": "2026-07-28",
       "end": "2026-08-08",
-      "status": "active",
-      "items": [
-        { "title": "Needs & mood simulation", "state": "done", "note": "Rust life.rs: hunger, energy, sleep cycle" },
-        { "title": "Care loop (feed, play, rest)", "state": "done" },
-        { "title": "Miaou Pounce mini-game", "state": "done", "note": "Rust/WASM arcade prototype" },
-        { "title": "In-world economy & bonuses", "state": "active" },
-        { "title": "Human playtest pass", "state": "todo" }
+      "title": "Jeu de la vie",
+      "goal": "Besoins, soin et mini-jeux : la boucle tamagotchi qui fait vivre le chat.",
+      "tasks": [
+        { "id": "T4.1", "title": "Simulation des besoins & humeur (life.rs : faim, énergie, sommeil)", "status": "done" },
+        { "id": "T4.2", "title": "Boucle de soin (nourrir, jouer, reposer)", "status": "done" },
+        { "id": "T4.3", "title": "Mini-jeu Miaou Pounce (prototype arcade Rust/WASM)", "status": "done" },
+        { "id": "T4.4", "title": "Économie in-world & bonus", "status": "doing" },
+        { "id": "T4.5", "title": "Passe de playtest humain", "status": "todo" }
       ]
     },
     {
       "id": "S5",
-      "name": "Multiplayer",
-      "goal": "See your colleagues' cats in a shared arena over a simple network layer.",
       "start": "2026-08-08",
       "end": "2026-08-22",
-      "status": "planned",
-      "items": [
-        { "title": "SignalR arena sync", "state": "todo", "note": "Presence + position replication" },
-        { "title": "Remote cat rendering", "state": "todo" },
-        { "title": "Shared-world interactions", "state": "todo" },
-        { "title": "Session/room lifecycle", "state": "todo" }
+      "title": "Multijoueur",
+      "goal": "Voir les chats des collègues dans une arène partagée, sur une couche réseau simple.",
+      "tasks": [
+        { "id": "T5.1", "title": "Synchro d'arène SignalR (présence + position)", "status": "todo" },
+        { "id": "T5.2", "title": "Rendu des chats distants", "status": "todo" },
+        { "id": "T5.3", "title": "Interactions en monde partagé", "status": "todo" },
+        { "id": "T5.4", "title": "Cycle de vie session / salon", "status": "todo" }
       ]
     },
     {
       "id": "S6",
-      "name": "Share & Ship",
-      "goal": "Social sharing, capture, and the release plumbing toward a Steam-quality build.",
       "start": "2026-08-22",
       "end": "2026-09-12",
-      "status": "planned",
-      "items": [
-        { "title": "Snapshot & clip capture", "state": "todo" },
-        { "title": "Social share cards", "state": "todo" },
-        { "title": "Cat gallery / showcase", "state": "todo" },
-        { "title": "Release build pipeline", "state": "todo" }
+      "title": "Partage & sortie",
+      "goal": "Partage social, capture, et la chaîne de release vers un build de qualité Steam.",
+      "tasks": [
+        { "id": "T6.1", "title": "Capture snapshot & clip", "status": "todo" },
+        { "id": "T6.2", "title": "Cartes de partage social", "status": "todo" },
+        { "id": "T6.3", "title": "Galerie / vitrine de chats", "status": "todo" },
+        { "id": "T6.4", "title": "Chaîne de build de release", "status": "todo" }
       ]
+    }
+  ],
+  "backlog": [
+    {
+      "title": "Chat qui vieillit",
+      "note": "Le chat évolue avec le temps réel : chaton → adulte → vieux, morphologie et comportement qui suivent."
+    },
+    {
+      "title": "Météo & saisons",
+      "note": "Pluie, neige, saisons qui changent l'ambiance du monde et l'humeur du chat."
+    },
+    {
+      "title": "Éditeur de monde en JSON",
+      "note": "Le monde est du code aujourd'hui. Le passer en données ouvrirait un éditeur communautaire."
+    },
+    {
+      "title": "Manette & tactile",
+      "note": "Gamepad API + contrôles tactiles pour jouer hors clavier/souris, notamment sur mobile."
     }
   ]
 }

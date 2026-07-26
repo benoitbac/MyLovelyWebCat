@@ -1,0 +1,74 @@
+{
+  "updated": "2026-07-26",
+  "focus": "La verticale jouable tient de bout en bout : créateur 3D → monde parcourable → boucle de vie + mini-jeu. En cours : l'économie in-world (monnaie, bonus), puis un vrai playtest humain avant d'attaquer le multijoueur.",
+  "narrative": "Miaou part d'un pari : un jeu de la vie félin qui a la gueule d'un vrai jeu, pas d'une démo technique — un chat qu'on reconnaît, un monde où on tourne autour à la GTA, sans rien installer. D'où la stack : un moteur de simulation en Rust compilé en WebAssembly pour la boucle de besoins et l'arcade, un backend .NET/SignalR pour retrouver les chats des collègues au bureau, et Three.js pour le rendu (bloom, ACES, ombres douces). Le créateur charge de vrais modèles de chats sous licence libre et sait ingérer une photo transformée en 3D, pour que chacun joue le sien. La verticale est là ; reste à l'épaissir en jeu.",
+  "history": [
+    { "label": "départ", "done": 0 },
+    { "label": "socle", "done": 5 },
+    { "label": "créateur", "done": 10 },
+    { "label": "monde", "done": 14 },
+    { "label": "jeu de la vie", "done": 17 }
+  ],
+  "goal": 27,
+  "sessions": [
+    {
+      "date": "2026-07-26",
+      "title": "S2–S4 · Du créateur à la boucle de vie",
+      "items": [
+        {
+          "tag": "T2.2",
+          "status": "done",
+          "text": "Galerie de vrais chats plutôt que des primitives : les modèles CC-BY de Poly Pizza sont chargés par leur URL glb réelle (extraite du __NEXT_DATA__ de la page, le CDN direct renvoyant 403), crédités dans CREDITS.md."
+        },
+        {
+          "tag": "T2.3",
+          "status": "done",
+          "text": "Import photo → 3D : pipeline Hunyuan3D/Tripo qui sort un .glb ingéré par le même GLTFLoader que la galerie, pour que le chat importé et les chats du catalogue vivent dans le même pipeline de rendu."
+        },
+        {
+          "tag": "T4.1",
+          "status": "done",
+          "text": "Besoins et humeur simulés côté Rust (life.rs) : faim, énergie, cycle de sommeil. Les emprunts se croisaient (self.enter(self.pending)) — résolu en calculant les valeurs dans des locales avant de muter."
+        },
+        {
+          "tag": "T4.3",
+          "status": "done",
+          "text": "Mini-jeu Miaou Pounce en Rust/WASM : première vraie boucle de jeu par-dessus la simulation, pour prouver que le moteur sert au gameplay et pas qu'au tamagotchi."
+        }
+      ]
+    },
+    {
+      "date": "2026-07-25",
+      "title": "S1 · Le socle s'encre",
+      "items": [
+        {
+          "tag": "T1.1",
+          "status": "done",
+          "text": "Moteur Rust compilé en WebAssembly (wasm-pack --target web), sortie versionnée dans src/wasm. La logique de vie et l'arcade partagent le même crate, appelées depuis le web via un binding fin."
+        },
+        {
+          "tag": "T1.4",
+          "status": "done",
+          "text": "Pile de rendu Three.js montée pour viser le feel produit avant la prouesse : environnement PMREM, EffectComposer + UnrealBloomPass, tone mapping ACES filmique, ombres PCF douces."
+        },
+        {
+          "tag": "T1.2",
+          "status": "done",
+          "text": "Backend .NET 9 + SignalR (ArenaHub) qui build et tourne headless, pour préparer le multijoueur au bureau sans bloquer la verticale solo."
+        }
+      ]
+    }
+  ],
+  "next": [
+    { "text": "T4.4 — économie in-world : monnaie, bonus, ce qu'on gagne à s'occuper du chat" },
+    {
+      "text": "T4.5 — passe de playtest humain",
+      "blocked": "tout a surtout été vérifié en solo ; il faut un vrai retour joueur avant d'élargir"
+    },
+    {
+      "text": "T5.1 — synchro d'arène SignalR (présence + position des chats distants)",
+      "blocked": "dépend d'une boucle de vie stable (S4) avant d'ajouter le réseau"
+    },
+    { "text": "Passer le monde de code à données JSON, pour ouvrir un éditeur plus tard" }
+  ]
+}
