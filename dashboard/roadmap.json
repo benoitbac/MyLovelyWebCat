@@ -54,7 +54,7 @@
         { "id": "T4.1", "title": "Simulation des besoins & humeur (life.rs : faim, énergie, sommeil)", "status": "done" },
         { "id": "T4.2", "title": "Boucle de soin (nourrir, jouer, reposer)", "status": "done" },
         { "id": "T4.3", "title": "Mini-jeu Miaou Pounce (prototype arcade Rust/WASM)", "status": "done" },
-        { "id": "T4.4", "title": "Économie in-world & bonus", "status": "doing" },
+        { "id": "T4.4", "title": "Économie in-world & bonus", "status": "done" },
         { "id": "T4.5", "title": "Passe de playtest humain", "status": "todo" }
       ]
     },

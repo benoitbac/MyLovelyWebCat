@@ -1,16 +1,38 @@
 {
   "updated": "2026-07-26",
-  "focus": "La verticale jouable tient de bout en bout : créateur 3D → monde parcourable → boucle de vie + mini-jeu. En cours : l'économie in-world (monnaie, bonus), puis un vrai playtest humain avant d'attaquer le multijoueur.",
+  "focus": "Économie in-world livrée : on gagne des croquettes en s'occupant du chat au bon moment (bonus d'utilité, série, bonus du jour, dividende « ronron ») et on les dépense en boutique. Prochaine marche : un vrai playtest humain avant d'attaquer le multijoueur.",
   "narrative": "Miaou part d'un pari : un jeu de la vie félin qui a la gueule d'un vrai jeu, pas d'une démo technique — un chat qu'on reconnaît, un monde où on tourne autour à la GTA, sans rien installer. D'où la stack : un moteur de simulation en Rust compilé en WebAssembly pour la boucle de besoins et l'arcade, un backend .NET/SignalR pour retrouver les chats des collègues au bureau, et Three.js pour le rendu (bloom, ACES, ombres douces). Le créateur charge de vrais modèles de chats sous licence libre et sait ingérer une photo transformée en 3D, pour que chacun joue le sien. La verticale est là ; reste à l'épaissir en jeu.",
   "history": [
     { "label": "départ", "done": 0 },
     { "label": "socle", "done": 5 },
     { "label": "créateur", "done": 10 },
     { "label": "monde", "done": 14 },
-    { "label": "jeu de la vie", "done": 17 }
+    { "label": "jeu de la vie", "done": 17 },
+    { "label": "économie", "done": 18 }
   ],
   "goal": 27,
   "sessions": [
+    {
+      "date": "2026-07-26",
+      "title": "S4 · Économie in-world & bonus",
+      "items": [
+        {
+          "tag": "T4.4",
+          "status": "done",
+          "text": "Gain de croquettes indexé sur l'UTILITÉ du soin : la récompense suit le déficit du besoin visé, donc s'occuper d'un chat qui en a besoin paie, spammer une jauge pleine non. Une série (soins enchaînés < 30 s) ajoute un multiplicateur ×1,25 par cran (plafond ×3), un bonus tombe au premier soin de la journée, et un dividende « ronron » verse 1🪙/15 s tant que tous les besoins restent hauts."
+        },
+        {
+          "tag": "T4.4",
+          "status": "done",
+          "text": "Boutique : articles qui comblent PLUSIEURS besoins d'un coup (Festin royal = faim + propreté + jeu + câlin), ce qui justifie leur prix face aux actions gratuites du dock qui n'en touchent qu'une. Achat = débit atomique (refusé si solde insuffisant) puis effet appliqué au moteur Rust."
+        },
+        {
+          "tag": "T4.4",
+          "status": "done",
+          "text": "Durci le montage du monde : le onMount async pouvait être détruit pendant un await (le monde s'affiche une frame au boot avant de basculer sur le créateur), libérant le pointeur wasm Life → « null pointer passed to rust ». Gardes `disposed` après chaque await."
+        }
+      ]
+    },
     {
       "date": "2026-07-26",
       "title": "S2–S4 · Du créateur à la boucle de vie",
@@ -60,7 +82,6 @@
     }
   ],
   "next": [
-    { "text": "T4.4 — économie in-world : monnaie, bonus, ce qu'on gagne à s'occuper du chat" },
     {
       "text": "T4.5 — passe de playtest humain",
       "blocked": "tout a surtout été vérifié en solo ; il faut un vrai retour joueur avant d'élargir"
