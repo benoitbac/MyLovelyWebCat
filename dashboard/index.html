@@ -1,241 +1,135 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Miaou — Dashboard</title>
 <style>
   :root {
-    --bg:#08070f; --bg2:#140f24; --card:rgba(28,22,46,.55); --card-solid:#181227;
-    --stroke:rgba(150,130,255,.16); --stroke2:rgba(150,130,255,.28);
-    --text:#f0edff; --muted:#a49dc8; --accent:#9a7bff; --neon:#66d9ff;
-    --p0:#8fd0ff; --p1:#9a7bff; --p2:#ff9ecf; --p3:#5fe3b0;
-    --todo:#8b86ad; --active:#ffcf4a; --done:#5fe08a;
+    --bg: #14150f;
+    --panel: #1c1e16;
+    --panel-2: #23261c;
+    --line: #34382a;
+    --ink: #e8e6dc;
+    --muted: #9b9c8c;
+    --accent: #c9a227;
+    --done: #6f9e4c;
+    --active: #d9a441;
+    --todo: #4a4e3c;
+    --danger: #b4553f;
+    --radius: 10px;
   }
-  @media (prefers-color-scheme: light) {
-    :root { --bg:#f3f1fb; --bg2:#e9e4f8; --card:rgba(255,255,255,.7); --card-solid:#fff;
-      --stroke:rgba(120,100,220,.16); --stroke2:rgba(120,100,220,.3); --text:#1b1730; --muted:#655f85; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   }
-  * { box-sizing:border-box; }
-  body { margin:0; color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    background:
-      radial-gradient(900px 500px at 12% -8%, color-mix(in srgb,var(--p1) 22%,transparent), transparent 60%),
-      radial-gradient(900px 500px at 100% 0%, color-mix(in srgb,var(--p2) 16%,transparent), transparent 55%),
-      linear-gradient(180deg,var(--bg2),var(--bg)) fixed;
-    padding:34px 22px 90px; -webkit-font-smoothing:antialiased; }
-  .wrap { max-width:1180px; margin:0 auto; }
+  header {
+    padding: 28px 32px 22px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #1b1d14, var(--bg));
+  }
+  h1 { margin: 0; font-size: 30px; letter-spacing: -0.5px; }
+  h1 span { color: var(--accent); }
+  .tagline { color: var(--muted); margin-top: 6px; font-size: 14px; }
+  .meta { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--line);
+    padding: 4px 11px; border-radius: 999px; color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .overall { margin-top: 14px; height: 6px; background: #191b13;
+    border: 1px solid var(--line); border-radius: 4px; overflow: hidden; max-width: 520px; }
+  .overall i { display: block; height: 100%; background: var(--done);
+    transition: width .7s cubic-bezier(.2,.8,.2,1); }
+  main { padding: 26px 32px 60px; max-width: 1400px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1.2px;
+       color: var(--muted); margin: 30px 0 14px; font-weight: 600; }
+  h2:first-child { margin-top: 0; }
 
-  /* Header */
-  .top { display:flex; align-items:center; justify-content:space-between; gap:26px; flex-wrap:wrap; }
-  .brand h1 { margin:0; font-size:32px; font-weight:850; letter-spacing:.2px; }
-  .brand h1 span { background:linear-gradient(90deg,var(--accent),var(--neon)); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .brand .tag { color:var(--muted); margin:6px 0 0; font-size:14px; }
-  .hero { display:flex; align-items:center; gap:22px; }
-  .ring { position:relative; width:104px; height:104px; flex:none; }
-  .ring svg { transform:rotate(-90deg); }
-  .ring .val { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .ring .val b { font-size:24px; font-weight:850; }
-  .ring .val small { font-size:10px; color:var(--muted); letter-spacing:.5px; }
-  .stats { display:flex; flex-direction:column; gap:8px; }
-  .stat { display:flex; align-items:baseline; gap:8px; font-size:13px; color:var(--muted); }
-  .stat b { font-size:19px; color:var(--text); font-variant-numeric:tabular-nums; }
+  /* Gantt */
+  .gantt { border: 1px solid var(--line); border-radius: var(--radius);
+           overflow-x: auto; background: var(--panel); }
+  .gantt table { border-collapse: collapse; width: 100%; min-width: 720px; }
+  .gantt th { font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
+              color: var(--muted); text-align: left; padding: 11px 14px;
+              border-bottom: 1px solid var(--line); font-weight: 600; }
+  .gantt td { padding: 9px 14px; border-bottom: 1px solid #262920; vertical-align: middle; }
+  .gantt tr:last-child td { border-bottom: 0; }
+  .gantt .sname { font-weight: 600; white-space: nowrap; }
+  .gantt .sid { color: var(--accent); font-variant-numeric: tabular-nums;
+                margin-right: 8px; font-weight: 700; }
+  .track { position: relative; height: 22px; background: #191b13;
+           border-radius: 5px; min-width: 340px; }
+  .bar { position: absolute; top: 3px; height: 16px; border-radius: 4px;
+         display: flex; align-items: center; padding: 0 8px;
+         font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .bar.done   { background: var(--done); }
+  .bar.active { background: var(--active); }
+  .bar.planned{ background: var(--todo); }
+  .bar-pct { font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .bar-pct.inside  { color: #14150f; }
+  .bar-pct.outside { position: absolute; top: 4px; color: var(--active); }
+  .today { position: absolute; top: -3px; bottom: -3px; width: 2px;
+           background: var(--danger); }
 
-  /* Category breakdown */
-  .cats { display:flex; gap:12px; flex-wrap:wrap; margin:26px 0 20px; }
-  .cat { flex:1; min-width:180px; background:var(--card); border:1px solid var(--stroke); border-radius:14px;
-    padding:12px 14px; backdrop-filter:blur(12px); }
-  .cat .h { display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; margin-bottom:8px; }
-  .cat .dot { width:9px; height:9px; border-radius:50%; }
-  .cat .h span { margin-left:auto; color:var(--muted); font-weight:600; font-variant-numeric:tabular-nums; }
-  .track { height:7px; border-radius:999px; background:rgba(255,255,255,.09); overflow:hidden; }
-  .track > i { display:block; height:100%; border-radius:999px; transition:width .7s cubic-bezier(.2,.8,.2,1); }
+  /* Sprint cards */
+  .cards { display: grid; gap: 16px;
+           grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line);
+          border-radius: var(--radius); padding: 18px; }
+  .card.is-active { border-color: var(--accent); }
+  .card h3 { margin: 0 0 3px; font-size: 17px; }
+  .card h3 em { color: var(--accent); font-style: normal; margin-right: 7px; }
+  .card .goal { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+  .prog { height: 5px; background: #191b13; border-radius: 3px;
+          overflow: hidden; margin-bottom: 14px; }
+  .prog i { display: block; height: 100%; background: var(--done); }
+  ul.items { list-style: none; margin: 0; padding: 0; }
+  ul.items li { display: flex; gap: 9px; padding: 5px 0; font-size: 13.5px;
+                align-items: flex-start; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 6px;
+         flex: 0 0 9px; background: var(--todo); }
+  .dot.done { background: var(--done); }
+  .dot.active { background: var(--active); }
+  .it-note { color: var(--muted); font-size: 12px; }
+  .strike { color: var(--muted); }
 
-  /* View toggle */
-  .toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:6px 0 18px; flex-wrap:wrap; }
-  .seg { display:inline-flex; background:var(--card); border:1px solid var(--stroke); border-radius:12px; padding:4px; gap:4px; }
-  .seg button { border:0; background:transparent; color:var(--muted); font-weight:700; font-size:13px; padding:7px 16px; border-radius:9px; cursor:pointer; }
-  .seg button.on { background:linear-gradient(135deg,var(--accent),#4636b8); color:#fff; box-shadow:0 6px 18px rgba(123,92,255,.4); }
-  .legend { display:flex; gap:14px; font-size:12px; color:var(--muted); flex-wrap:wrap; }
-
-  /* Cards view */
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:18px; }
-  .lot { position:relative; background:var(--card); border:1px solid var(--stroke); border-radius:18px; padding:18px 18px 16px;
-    backdrop-filter:blur(14px); box-shadow:0 14px 40px rgba(0,0,0,.28); overflow:hidden; transition:transform .15s ease, border-color .2s; }
-  .lot:hover { transform:translateY(-3px); border-color:var(--stroke2); }
-  .lot::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--c); }
-  .lot.active { border-color:color-mix(in srgb,var(--active) 45%,var(--stroke)); }
-  .lh { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
-  .num { font-size:12px; font-weight:850; color:#fff; background:var(--c); width:26px; height:26px; display:grid; place-items:center; border-radius:8px; }
-  .lt { font-size:16px; font-weight:750; flex:1; }
-  .pill { font-size:10.5px; font-weight:850; text-transform:uppercase; letter-spacing:.5px; padding:4px 10px; border-radius:999px; }
-  .pill.todo { color:var(--todo); background:color-mix(in srgb,var(--todo) 18%,transparent); }
-  .pill.active { color:#231a02; background:var(--active); box-shadow:0 0 16px color-mix(in srgb,var(--active) 55%,transparent); }
-  .pill.done { color:#04220f; background:var(--done); }
-  .cat-name { font-size:11.5px; font-weight:700; color:var(--c); margin:2px 0 8px; }
-  .goal { color:var(--muted); font-size:13px; line-height:1.5; margin:0 0 12px; }
-  .prog { display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted); margin-bottom:10px; }
-  .prog .track { flex:1; height:8px; }
-  .prog b { font-variant-numeric:tabular-nums; }
-  ul.tasks { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
-  ul.tasks li { display:flex; align-items:flex-start; gap:9px; font-size:13px; line-height:1.45; }
-  .chk { width:16px; height:16px; border-radius:5px; border:1.6px solid var(--stroke2); flex:none; margin-top:1px; }
-  .chk.on { background:var(--done); border-color:var(--done); position:relative; }
-  .chk.on::after { content:"✓"; position:absolute; inset:0; display:grid; place-items:center; font-size:11px; font-weight:900; color:#04220f; }
-  li.done span:last-child { color:var(--muted); text-decoration:line-through; }
-
-  /* Kanban view */
-  .kanban { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-  .col { background:var(--card); border:1px solid var(--stroke); border-radius:16px; padding:14px; backdrop-filter:blur(12px); }
-  .col > h3 { margin:0 0 12px; font-size:13px; font-weight:800; display:flex; align-items:center; gap:8px; }
-  .col > h3 .badge { margin-left:auto; font-size:11px; color:var(--muted); background:rgba(255,255,255,.08); padding:2px 9px; border-radius:999px; }
-  .kcard { background:var(--card-solid); border:1px solid var(--stroke); border-left:4px solid var(--c); border-radius:12px; padding:12px; margin-bottom:10px; }
-  .kcard .lh { margin-bottom:6px; }
-  .kcard .num { width:22px; height:22px; font-size:11px; }
-  .kcard .lt { font-size:14px; }
-  .kcard .mini { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); }
-  .kcard .mini .track { flex:1; height:6px; }
-  .hidden { display:none; }
-
-  footer { text-align:center; color:var(--muted); font-size:12px; margin-top:44px; }
+  .empty { color: var(--muted); font-style: italic; }
+  footer { padding: 24px 32px; border-top: 1px solid var(--line);
+           color: var(--muted); font-size: 12.5px; }
+  footer a { color: var(--accent); }
+  code { background: var(--panel-2); padding: 1px 5px; border-radius: 4px;
+         font-size: 12px; }
+  @media (max-width: 640px) {
+    header, main, footer { padding-left: 18px; padding-right: 18px; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <h1>Miaou <span>Dashboard</span></h1>
-      <p class="tag">GTA-like félin · game of life 3D — suivi des lots</p>
-    </div>
-    <div class="hero">
-      <div class="ring">
-        <svg width="104" height="104" viewBox="0 0 104 104">
-          <defs>
-            <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#9a7bff"/><stop offset="100%" stop-color="#66d9ff"/>
-            </linearGradient>
-          </defs>
-          <circle cx="52" cy="52" r="46" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="9"/>
-          <circle id="ring-fg" cx="52" cy="52" r="46" fill="none" stroke="url(#rg)" stroke-width="9"
-            stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"
-            style="transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)"/>
-        </svg>
-        <div class="val"><b id="ov-pct">0%</b><small>GLOBAL</small></div>
-      </div>
-      <div class="stats">
-        <div class="stat"><b id="ov-lots">0/0</b> lots faits</div>
-        <div class="stat"><b id="ov-tasks">0/0</b> tâches</div>
-        <div class="stat"><b id="ov-active">0</b> en cours</div>
-      </div>
-    </div>
-  </header>
+<header>
+  <h1>Miao<span>u</span></h1>
+  <div class="tagline" id="tagline">Loading…</div>
+  <div class="meta" id="meta"></div>
+  <div class="overall"><i id="overall-fill" style="width:0%"></i></div>
+</header>
 
-  <div class="cats" id="cats"></div>
+<main>
+  <section id="view-sprints">
+    <h2>Timeline</h2>
+    <div class="gantt" id="gantt"></div>
+    <h2>Sprints</h2>
+    <div class="cards" id="cards"></div>
+  </section>
+</main>
 
-  <div class="toolbar">
-    <div class="seg">
-      <button id="v-cards" class="on" onclick="setView('cards')">▦ Cartes</button>
-      <button id="v-kanban" onclick="setView('kanban')">▤ Kanban</button>
-    </div>
-    <div class="legend"><span>⬜ à venir</span><span>🟨 en cours</span><span>🟩 fait</span></div>
-  </div>
+<footer>
+  Generated from <code>dashboard/roadmap.json</code>.
+  &nbsp;·&nbsp; <a href="https://github.com/benoitbac/MyLovelyWebCat">Repository</a>
+</footer>
 
-  <div class="grid" id="grid"></div>
-  <div class="kanban hidden" id="kanban"></div>
-
-  <footer>Source de vérité : <b>GUIDELINE.md</b> + ce dashboard · mis à jour au fil des lots.</footer>
-</div>
-
-<script>
-// ============================================================================
-//  ROADMAP — SOURCE DE VÉRITÉ. status: "todo" | "active" | "done"
-// ============================================================================
-const CATEGORIES = [
-  { id:0, label:"Fondations", color:"var(--p0)" },
-  { id:1, label:"Créateur 3D", color:"var(--p1)" },
-  { id:2, label:"Monde & Jeux", color:"var(--p2)" },
-  { id:3, label:"Social & Multi", color:"var(--p3)" },
-];
-const LOTS = [
-  { n:"A", title:"Fondations stack", cat:0, status:"done",
-    goal:"Stack studio en place et qui tourne : moteur Rust/WASM, backend .NET, shell web.",
-    tasks:[["Moteur de jeu Rust → WebAssembly (wasm-pack)",1],["Backend .NET 9 + SignalR (health, scores, arène)",1],["Shell Svelte 5 + TS + Vite, routeur d'écrans",1],["Sim de vie du chat en Rust (besoins, jour/nuit)",1],["check / lint / build verts",1]] },
-  { n:"B", title:"Créateur 3D (avatar)", cat:1, status:"done",
-    goal:"Créer son chat en 3D façon GTA : vrais modèles, import, personnalisation, présentation premium.",
-    tasks:[["Scène 3D studio (Three.js, orbit, ombres, env.)",1],["Galerie de vrais chats (.glb) + import du sien",1],["Personnalisation : teinte, corpulence, chapeau",1],["Présentation premium (bloom, sol brillant)",1],["Vignettes réelles dans la galerie",0],["Accessoires ancrés par modèle",0]] },
-  { n:"C", title:"Monde 3D", cat:2, status:"done",
-    goal:"Un monde 3D où ton chat vit et se balade, caméra 3e personne, cycle jour/nuit.",
-    tasks:[["Scène monde (prairie, arbres, rochers, jour/nuit)",1],["Chat 3D posé + déplacement clic-pour-aller",1],["Caméra 3e personne (suit + orbite + zoom)",1],["Animation de marche du chat",0],["Décor enrichi / points d'intérêt",0]] },
-  { n:"D", title:"Game of life", cat:2, status:"active",
-    goal:"Le chat vit : besoins, soins, économie, vie autonome dans le monde.",
-    tasks:[["Sim de vie Rust (besoins) + HUD",1],["Dock de soins (nourrir/câliner/jouer/laver)",1],["Économie (pièces gagnées en jouant)",1],["Vie autonome du chat dans le monde",0],["Objets interactifs (gamelle, panier, jouets)",0]] },
-  { n:"E", title:"Jeux", cat:2, status:"active",
-    goal:"De vrais mini-jeux qui nourrissent l'économie, avec bonus et déblocables.",
-    tasks:[["Miaou Pounce (moteur Rust) jouable",1],["Récompense en pièces + joie",1],["2-3 autres mini-jeux",0],["Bonus / déblocables",0]] },
-  { n:"F", title:"Multijoueur", cat:3, status:"todo",
-    goal:"Les chats des collègues dans le même monde, en temps réel (SignalR).",
-    tasks:[["Client SignalR (présence, salle 'bureau')",0],["Chats des autres joueurs (positions live)",0],["Scores / classements en direct",0],["Interactions sociales",0]] },
-  { n:"G", title:"Partage social", cat:3, status:"todo",
-    goal:"Montrer son chat et ses scores : captures, cartes, liens.",
-    tasks:[["Capture / carte de son chat",0],["Carte de score partageable",0],["Liens de partage (état encodé)",0]] },
-];
-
-const STATUS = { todo:"À venir", active:"En cours", done:"Fait" };
-const catById = Object.fromEntries(CATEGORIES.map(c=>[c.id,c]));
-const pct = t => t.length ? Math.round(t.filter(x=>x[1]).length/t.length*100) : 0;
-
-// Stats globales + ring
-let tot=0, don=0, doneLots=0, active=0;
-for (const l of LOTS){ tot+=l.tasks.length; don+=l.tasks.filter(t=>t[1]).length; if(l.status==="done")doneLots++; if(l.status==="active")active++; }
-const ov = tot? Math.round(don/tot*100):0;
-document.getElementById("ov-pct").textContent = ov+"%";
-document.getElementById("ov-lots").textContent = doneLots+"/"+LOTS.length;
-document.getElementById("ov-tasks").textContent = don+"/"+tot;
-document.getElementById("ov-active").textContent = active;
-requestAnimationFrame(()=>{ const C=289; document.getElementById("ring-fg").style.strokeDashoffset = C*(1-ov/100); });
-
-// Category breakdown
-document.getElementById("cats").innerHTML = CATEGORIES.map(c=>{
-  const ls = LOTS.filter(l=>l.cat===c.id);
-  const tk = ls.flatMap(l=>l.tasks); const p = pct(tk);
-  return `<div class="cat"><div class="h"><span class="dot" style="background:${c.color}"></span>${c.label}<span>${p}%</span></div>
-    <div class="track"><i style="width:${p}%;background:${c.color}"></i></div></div>`;
-}).join("");
-
-// Card
-function cardHTML(l){
-  const c = catById[l.cat]||{label:"",color:"var(--muted)"};
-  const done = l.tasks.filter(t=>t[1]).length, p = pct(l.tasks);
-  return `<div class="lot ${l.status}" style="--c:${c.color}">
-    <div class="lh"><span class="num">${l.n}</span><span class="lt">${l.title}</span>
-      <span class="pill ${l.status}">${STATUS[l.status]}</span></div>
-    <div class="cat-name">${c.label}</div>
-    <p class="goal">${l.goal}</p>
-    <div class="prog"><div class="track"><i style="width:${p}%;background:linear-gradient(90deg,var(--accent),var(--neon))"></i></div><b>${done}/${l.tasks.length}</b></div>
-    <ul class="tasks">${l.tasks.map(([t,d])=>`<li class="${d?'done':''}"><span class="chk ${d?'on':''}"></span><span>${t}</span></li>`).join("")}</ul>
-  </div>`;
-}
-document.getElementById("grid").innerHTML = LOTS.map(cardHTML).join("");
-
-// Kanban
-function kcardHTML(l){
-  const c = catById[l.cat]||{color:"var(--muted)"}; const done=l.tasks.filter(t=>t[1]).length, p=pct(l.tasks);
-  return `<div class="kcard" style="--c:${c.color}">
-    <div class="lh"><span class="num">${l.n}</span><span class="lt">${l.title}</span></div>
-    <div class="mini"><div class="track"><i style="width:${p}%;background:${c.color}"></i></div><b>${done}/${l.tasks.length}</b></div>
-  </div>`;
-}
-document.getElementById("kanban").innerHTML = ["todo","active","done"].map(st=>{
-  const ls = LOTS.filter(l=>l.status===st);
-  return `<div class="col"><h3>${STATUS[st]}<span class="badge">${ls.length}</span></h3>${ls.map(kcardHTML).join("")||'<div style="color:var(--muted);font-size:12px">—</div>'}</div>`;
-}).join("");
-
-function setView(v){
-  document.getElementById("grid").classList.toggle("hidden", v!=="cards");
-  document.getElementById("kanban").classList.toggle("hidden", v!=="kanban");
-  document.getElementById("v-cards").classList.toggle("on", v==="cards");
-  document.getElementById("v-kanban").classList.toggle("on", v==="kanban");
-}
-window.setView = setView;
-</script>
+<script src="app.js"></script>
 </body>
 </html>

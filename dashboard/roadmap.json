@@ -1,0 +1,95 @@
+{
+  "project": "Miaou",
+  "tagline": "A GTA-like 3D game of life for cats — create your cat, raise it, and share your world.",
+  "updated": "2026-07-26",
+  "currentSprint": "S4",
+  "sprints": [
+    {
+      "id": "S1",
+      "name": "Foundations",
+      "goal": "Rust/WASM simulation engine, .NET/SignalR backend and the Svelte web shell.",
+      "start": "2026-07-24",
+      "end": "2026-07-26",
+      "status": "done",
+      "items": [
+        { "title": "Rust engine → WebAssembly pipeline", "state": "done", "note": "wasm-pack build --target web, versioned output in src/wasm" },
+        { "title": ".NET 9 + SignalR backend", "state": "done", "note": "ArenaHub, builds and runs headless" },
+        { "title": "Svelte 5 + TypeScript + Vite shell", "state": "done", "note": "Runes, screen router, IndexedDB kv store" },
+        { "title": "Three.js render stack", "state": "done", "note": "PMREM env, EffectComposer + bloom, ACES tone mapping, soft shadows" },
+        { "title": "Local-first persistence", "state": "done", "note": "IndexedDB, saved cat survives reload" }
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "Cat Creator",
+      "goal": "A GTA-style creator: orbit a real 3D cat, pick from a gallery, import your own.",
+      "start": "2026-07-25",
+      "end": "2026-07-26",
+      "status": "done",
+      "items": [
+        { "title": "Orbit camera around a 3D cat", "state": "done", "note": "OrbitControls, turntable framing" },
+        { "title": "Gallery of real CC cat models", "state": "done", "note": "Poly Pizza CC-BY glb, credited in CREDITS.md" },
+        { "title": "Photo → 3D import path", "state": "done", "note": "Hunyuan3D/Tripo → .glb ingestion" },
+        { "title": "Tint, corpulence, accessories", "state": "done" },
+        { "title": "Free + premium adoption flow", "state": "done" }
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "The World",
+      "goal": "A walkable 3D world with third-person camera and a day/night cycle.",
+      "start": "2026-07-26",
+      "end": "2026-07-28",
+      "status": "done",
+      "items": [
+        { "title": "Third-person walkable cat", "state": "done", "note": "AnimationMixer locomotion" },
+        { "title": "GTA-style orbit/follow camera", "state": "done" },
+        { "title": "Day/night lighting cycle", "state": "done" },
+        { "title": "Environment + grounding", "state": "done" }
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "Game of Life",
+      "goal": "Needs, care and mini-games. The tamagotchi loop that makes the cat live.",
+      "start": "2026-07-28",
+      "end": "2026-08-08",
+      "status": "active",
+      "items": [
+        { "title": "Needs & mood simulation", "state": "done", "note": "Rust life.rs: hunger, energy, sleep cycle" },
+        { "title": "Care loop (feed, play, rest)", "state": "done" },
+        { "title": "Miaou Pounce mini-game", "state": "done", "note": "Rust/WASM arcade prototype" },
+        { "title": "In-world economy & bonuses", "state": "active" },
+        { "title": "Human playtest pass", "state": "todo" }
+      ]
+    },
+    {
+      "id": "S5",
+      "name": "Multiplayer",
+      "goal": "See your colleagues' cats in a shared arena over a simple network layer.",
+      "start": "2026-08-08",
+      "end": "2026-08-22",
+      "status": "planned",
+      "items": [
+        { "title": "SignalR arena sync", "state": "todo", "note": "Presence + position replication" },
+        { "title": "Remote cat rendering", "state": "todo" },
+        { "title": "Shared-world interactions", "state": "todo" },
+        { "title": "Session/room lifecycle", "state": "todo" }
+      ]
+    },
+    {
+      "id": "S6",
+      "name": "Share & Ship",
+      "goal": "Social sharing, capture, and the release plumbing toward a Steam-quality build.",
+      "start": "2026-08-22",
+      "end": "2026-09-12",
+      "status": "planned",
+      "items": [
+        { "title": "Snapshot & clip capture", "state": "todo" },
+        { "title": "Social share cards", "state": "todo" },
+        { "title": "Cat gallery / showcase", "state": "todo" },
+        { "title": "Release build pipeline", "state": "todo" }
+      ]
+    }
+  ]
+}
