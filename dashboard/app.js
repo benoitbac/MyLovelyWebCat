@@ -1,5 +1,8 @@
 'use strict';
 
+// La logique du cockpit. Identique dans les 18 dépôts — source unique dans
+// 0-AllMyPersoRepo/cockpit/. NE PAS ÉDITER dans un dépôt.
+
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
   String(s ?? '').replace(
@@ -7,97 +10,117 @@ const esc = (s) =>
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
 
-const TASK_STATES = [
-  { key: 'done', label: 'fait', color: '#4fae7c', opacity: 1 },
-  { key: 'doing', label: 'en cours', color: '#e9bb3c', opacity: 1 },
-  { key: 'todo', label: 'à faire', color: '#4f90b8', opacity: 0.5 },
-  { key: 'blocked', label: 'bloqué', color: '#c4322a', opacity: 0.6 },
-];
-const stateOf = (key) => TASK_STATES.find((s) => s.key === key) ?? TASK_STATES[2];
-
-const iso = (ms) => {
+const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const dayLabel = (ms) => {
   const d = new Date(ms);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 };
+
+const grab = (name) =>
+  fetch(name, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 
 // ---------------------------------------------------------------------
 // Gantt SVG fait main — pas de librairie de graphes dans ce dépôt.
+//
+// Une ligne PAR SPRINT, pas par tâche. Quarante-cinq barres de six pixels avec
+// une graduation quotidienne, c'est une image qu'on ne lit pas. Chaque barre
+// porte donc deux informations : sa POSITION dit quand, son REMPLISSAGE dit où
+// on en est. Le compte est écrit en clair au bout, parce qu'une proportion se
+// compare mal à l'œil d'une ligne à l'autre.
 // ---------------------------------------------------------------------
 function renderGantt(roadmap) {
-  const rows = [];
-  let tMin = Infinity;
-  let tMax = -Infinity;
+  const sprints = (roadmap.sprints ?? [])
+    .map((s) => ({ ...s, a: Date.parse(s.start), b: Date.parse(s.end) }))
+    .filter((s) => !Number.isNaN(s.a) && !Number.isNaN(s.b));
 
-  for (const sprint of roadmap.sprints ?? []) {
-    const s0 = Date.parse(sprint.start);
-    const s1 = Date.parse(sprint.end);
-    if (Number.isNaN(s0) || Number.isNaN(s1)) continue;
-    tMin = Math.min(tMin, s0);
-    tMax = Math.max(tMax, s1);
+  if (!sprints.length) return '<p class="lede">Aucun sprint daté.</p>';
 
-    rows.push({ kind: 'sprint', label: `${sprint.id} · ${sprint.title}`, a: s0, b: s1 });
-
-    const tasks = sprint.tasks ?? [];
-    const span = Math.max(s1 - s0, 1);
-    tasks.forEach((task, i) => {
-      const a = task.start ? Date.parse(task.start) : s0 + (span * i) / tasks.length;
-      const b = task.end ? Date.parse(task.end) : s0 + (span * (i + 1)) / tasks.length;
-      rows.push({ kind: 'task', label: task.title, a, b, status: task.status, id: task.id });
-    });
-  }
-
-  if (!rows.length) return '<p class="sub">Aucun sprint daté.</p>';
-
-  // Une journée de marge de part et d'autre, sinon les barres touchent le cadre.
   const day = 86400000;
-  tMin -= day / 2;
-  tMax += day / 2;
+  const tMin = Math.min(...sprints.map((s) => s.a)) - day * 2;
+  const tMax = Math.max(...sprints.map((s) => s.b)) + day * 2;
 
-  const W = 1040;
-  const leftLabel = 300;
-  const rightPad = 18;
-  const topAxis = 34;
-  const rowH = 15;
-  const rowGap = 6;
+  const W = 1000;
+  const leftLabel = 268;
+  const rightPad = 56;
+  const topAxis = 72;
+  const rowH = 26;
+  const rowGap = 14;
   const innerW = W - leftLabel - rightPad;
   const totalMs = Math.max(tMax - tMin, 1);
-  const H = topAxis + rows.length * (rowH + rowGap) + 16;
+  const H = topAxis + sprints.length * (rowH + rowGap) + 18;
   const x = (ms) => leftLabel + ((ms - tMin) / totalMs) * innerW;
 
-  let g = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Feuille de route">`;
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Feuille de route : un sprint par ligne, la position donne les dates et le remplissage l'avancement">`;
 
-  // Grille quotidienne + étiquettes de jour.
-  const firstTick = Math.ceil(tMin / day) * day;
-  for (let t = firstTick; t <= tMax; t += day) {
+  // Bandes mensuelles alternées : elles donnent l'échelle sans ajouter un seul
+  // trait de plus, et c'est ce qui permet d'espacer les dates à deux semaines.
+  const first = new Date(tMin);
+  let band = new Date(first.getFullYear(), first.getMonth(), 1).getTime();
+  let odd = 0;
+  while (band <= tMax) {
+    const next = new Date(new Date(band).getFullYear(), new Date(band).getMonth() + 1, 1).getTime();
+    const bx = Math.max(x(band), leftLabel);
+    const bw = Math.min(x(next), W - rightPad) - bx;
+    if (bw > 0) {
+      if (odd % 2 === 1) {
+        g += `<rect x="${bx}" y="${topAxis - 22}" width="${bw}" height="${H - topAxis + 16}" fill="#ffffff" fill-opacity="0.022"/>`;
+      }
+      if (bw > 46) {
+        g += `<text x="${bx + 6}" y="${topAxis - 50}" fill="#71717a" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">${MONTHS[new Date(band).getMonth()].replace('.', '')}</text>`;
+      }
+    }
+    band = next;
+    odd++;
+  }
+
+  // Graduation tous les 14 jours. Le quotidien produisait 90 étiquettes de 9 px
+  // qui se chevauchaient — donc une frise qui ne datait plus rien.
+  const step = day * 14;
+  const firstTick = Math.ceil(tMin / step) * step;
+  for (let t = firstTick; t <= tMax; t += step) {
     const gx = x(t);
-    g += `<line x1="${gx}" y1="${topAxis - 8}" x2="${gx}" y2="${H - 6}" stroke="#2a2522" stroke-dasharray="3 4"/>`;
-    g += `<text x="${gx + 3}" y="${topAxis - 12}" fill="#625950" style="font-size:9px">${iso(t)}</text>`;
+    g += `<line x1="${gx}" y1="${topAxis - 16}" x2="${gx}" y2="${H - 8}" stroke="#27272a" stroke-dasharray="2 5"/>`;
+    g += `<text x="${gx}" y="${topAxis - 4}" text-anchor="middle" fill="#a1a1aa" style="font-size:11px">${dayLabel(t)}</text>`;
   }
 
   const now = Date.now();
   if (now >= tMin && now <= tMax) {
     const tx = x(now);
-    g += `<line x1="${tx}" y1="${topAxis - 8}" x2="${tx}" y2="${H - 6}" stroke="#e9bb3c" stroke-width="1.5" stroke-dasharray="4 4"/>`;
-    g += `<text x="${tx + 4}" y="${topAxis - 22}" fill="#e9bb3c" style="font-size:9px;font-weight:700;letter-spacing:.12em">AUJOURD’HUI</text>`;
+    g += `<line x1="${tx}" y1="${topAxis - 16}" x2="${tx}" y2="${H - 8}" stroke="#fbbf24" stroke-width="1.5"/>`;
+    g += `<circle cx="${tx}" cy="${topAxis - 16}" r="3.5" fill="#fbbf24"/>`;
+    g += `<text x="${tx}" y="${topAxis - 28}" text-anchor="middle" fill="#fbbf24" style="font-size:10px;font-weight:700;letter-spacing:.14em">AUJOURD’HUI</text>`;
   }
 
-  rows.forEach((r, i) => {
+  sprints.forEach((sprint, i) => {
     const y = topAxis + i * (rowH + rowGap);
-    const x1 = x(r.a);
-    // Largeur plancher : un sprint d'une journée doit rester lisible.
-    const x2 = Math.max(x(r.b), x1 + 7);
+    const x1 = x(sprint.a);
+    const x2 = Math.max(x(sprint.b), x1 + 14);
+    const tasks = sprint.tasks ?? [];
+    const done = tasks.filter((t) => t.status === 'done').length;
+    const doing = tasks.filter((t) => t.status === 'doing').length;
+    const blocked = tasks.filter((t) => t.status === 'blocked').length;
+    const ratio = tasks.length ? done / tasks.length : 0;
+    const live = now >= sprint.a && now <= sprint.b;
 
-    if (r.kind === 'sprint') {
-      g += `<rect x="${leftLabel - 8}" y="${y - 3}" width="${innerW + 26}" height="${rowH + 6}" fill="rgba(233,187,60,0.05)"/>`;
-      g += `<text x="8" y="${y + 11}" fill="#ece3d2" style="font-size:10px;font-weight:700">${esc(r.label)}</text>`;
-      g += `<rect x="${x1}" y="${y + 5}" width="${x2 - x1}" height="4" rx="2" fill="#3d3631"/>`;
-      return;
+    g += `<text x="0" y="${y + 12}" fill="#f4f4f5" style="font-size:12.5px;font-weight:700">${esc(sprint.id)} · ${esc(sprint.title)}</text>`;
+    g += `<text x="0" y="${y + 26}" fill="#71717a" style="font-size:10.5px">${dayLabel(sprint.a)} → ${dayLabel(sprint.b)}</text>`;
+
+    g += `<rect x="${x1}" y="${y}" width="${x2 - x1}" height="${rowH}" rx="5" fill="#27272a" stroke="${live ? '#fbbf24' : '#3f3f46'}" stroke-width="${live ? 1.4 : 1}">`;
+    g += `<title>${esc(sprint.goal ?? sprint.title)}</title></rect>`;
+
+    if (ratio > 0) {
+      const fw = Math.max((x2 - x1) * ratio, 5);
+      g += `<rect x="${x1}" y="${y}" width="${fw}" height="${rowH}" rx="5" fill="#34d399" fill-opacity="0.55"/>`;
+    }
+    if (doing > 0) {
+      const dx = x1 + (x2 - x1) * ratio;
+      g += `<rect x="${dx}" y="${y}" width="4" height="${rowH}" fill="#fbbf24"/>`;
+    }
+    if (blocked > 0) {
+      g += `<circle cx="${x2 - 9}" cy="${y + 9}" r="4" fill="#fb7185"><title>${blocked} tâche(s) bloquée(s)</title></circle>`;
     }
 
-    const st = stateOf(r.status);
-    const label = r.label.length > 44 ? `${r.label.slice(0, 43)}…` : r.label;
-    g += `<text x="22" y="${y + 11}" fill="#9c9184" style="font-size:9.5px">${esc(r.id)} ${esc(label)}</text>`;
-    g += `<rect x="${x1}" y="${y}" width="${x2 - x1}" height="${rowH}" rx="3" ry="3" fill="${st.color}" fill-opacity="${st.opacity}"><title>${esc(r.label)} — ${st.label} (${iso(r.a)} → ${iso(r.b)})</title></rect>`;
+    g += `<text x="${x2 + 10}" y="${y + 17}" fill="${ratio === 1 ? '#34d399' : '#a1a1aa'}" style="font-size:12px;font-weight:700">${done}/${tasks.length}</text>`;
   });
 
   return `${g}</svg>`;
@@ -124,39 +147,220 @@ function renderBurnup(changelog) {
   const area = `${pad.l},${py(0)} ${line} ${px(history.length - 1)},${py(0)}`;
 
   let g = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Burn-up">`;
-  g += `<polygon points="${area}" fill="#4fae7c22"/>`;
-  g += `<polyline points="${line}" fill="none" stroke="#4fae7c" stroke-width="2"/>`;
-  g += `<line x1="${pad.l}" y1="${py(goal)}" x2="${W - pad.r}" y2="${py(goal)}" stroke="#e9bb3c" stroke-dasharray="4 4"/>`;
-  g += `<text x="${W - pad.r}" y="${py(goal) - 4}" text-anchor="end" fill="#e9bb3c" style="font-size:9px">objectif ${goal}</text>`;
+  g += `<polygon points="${area}" fill="rgba(52,211,153,0.14)"/>`;
+  g += `<polyline points="${line}" fill="none" stroke="#34d399" stroke-width="2"/>`;
+  g += `<line x1="${pad.l}" y1="${py(goal)}" x2="${W - pad.r}" y2="${py(goal)}" stroke="#fbbf24" stroke-dasharray="4 4"/>`;
+  g += `<text x="${W - pad.r}" y="${py(goal) - 4}" text-anchor="end" fill="#fbbf24" style="font-size:9px">objectif ${goal}</text>`;
 
   history.forEach((h, i) => {
-    g += `<circle cx="${px(i)}" cy="${py(h.done)}" r="3" fill="#4fae7c"><title>${esc(h.label)} — ${h.done} tâches</title></circle>`;
+    g += `<circle cx="${px(i)}" cy="${py(h.done)}" r="3" fill="#34d399"><title>${esc(h.label)} — ${h.done} tâches</title></circle>`;
     if (i === 0 || i === history.length - 1) {
-      g += `<text x="${px(i)}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : 'end'}" fill="#625950" style="font-size:9px">${esc(h.label)}</text>`;
+      g += `<text x="${px(i)}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : 'end'}" fill="#52525b" style="font-size:9px">${esc(h.label)}</text>`;
     }
   });
   return `${g}</svg>`;
 }
 
 // ---------------------------------------------------------------------
-// Rendu des sections déclaratives
+// Vision — où ça va, et pourquoi c'est gros. Optionnel : sans vision.json le
+// panneau reste caché plutôt que de s'afficher vide.
+//
+// Chaque surface porte une réserve, et ce n'est pas de la modestie : une
+// ambition dont on ne sait pas nommer le point faible est une ambition que
+// personne n'a encore attaquée.
 // ---------------------------------------------------------------------
+function renderVision(vision) {
+  if (!vision) return;
+  $('vision-section').hidden = false;
+  $('vision-thesis').innerHTML = String(vision.thesis ?? '')
+    .replace(/\*\*(.+?)\*\*/g, (_, m) => `<em>${esc(m)}</em>`);
+  $('vision-wedge').textContent = vision.wedge ?? '';
+
+  $('vision-surfaces').innerHTML = (vision.surfaces ?? [])
+    .map(
+      (s) => `<article class="surf">
+        <div class="surf__top">
+          <span class="surf__name">${esc(s.name)}</span>
+          <span class="surf__state" data-s="${esc(s.state ?? 'later')}">${esc(s.stateLabel ?? s.state ?? '')}</span>
+        </div>
+        <div class="surf__claim">${esc(s.claim ?? '')}</div>
+        ${s.evidence ? `<div class="surf__evidence">${esc(s.evidence)}</div>` : ''}
+        ${s.reserve ? `<div class="surf__reserve">réserve — ${esc(s.reserve)}</div>` : ''}
+      </article>`,
+    )
+    .join('');
+
+  $('vision-flywheel').innerHTML = (vision.flywheel ?? [])
+    .map(
+      (f, i) => `<div class="fly">
+        <div class="fly__n">${String(i + 1).padStart(2, '0')} ${esc(f.step ?? '')}</div>
+        <div class="fly__t">${esc(f.text ?? '')}</div>
+      </div>`,
+    )
+    .join('');
+
+  $('vision-moat').innerHTML = vision.moat
+    ? `<b>Ce qu'on ne peut pas nous reprendre —</b> ${esc(vision.moat)}`
+    : '';
+
+  renderProof(vision.proof);
+}
+
+// Trois états, et le mot compte : `directional` n'est pas un `proven` timide.
+// C'est « on sait de quel côté ça penche, pas de combien » — la seule case qui
+// autorise à décider sans mesure, et seulement parce que le sens suffit.
+const PROOF_STATES = {
+  proven: 'prouvé',
+  directional: 'le sens, pas l’ampleur',
+  unproven: 'pas prouvé',
+};
+
+function renderProof(proof) {
+  if (!Array.isArray(proof) || proof.length === 0) return;
+  $('proof-section').hidden = false;
+
+  const tally = { proven: 0, directional: 0, unproven: 0 };
+  for (const p of proof) {
+    if (tally[p.state] !== undefined) tally[p.state] += 1;
+  }
+  $('proof-tally').innerHTML = Object.entries(tally)
+    .map(
+      ([k, n]) =>
+        `<span><span class="proof__state" data-s="${k}">${esc(PROOF_STATES[k])}</span> <b>${n}</b></span>`,
+    )
+    .join('');
+
+  $('proof-list').innerHTML = proof
+    .map(
+      (p) => `<div class="proof">
+        <span class="proof__state" data-s="${esc(p.state ?? 'unproven')}">${esc(PROOF_STATES[p.state] ?? p.state ?? '')}</span>
+        <div>
+          <div class="proof__claim">${esc(p.claim ?? '')}</div>
+          ${p.note ? `<div class="proof__note">${esc(p.note)}</div>` : ''}
+        </div>
+      </div>`,
+    )
+    .join('');
+}
+
+// ---------------------------------------------------------------------
+// Mesures — le panneau venu de NextQR, rendu générique.
+//
+// Générique veut dire : le JSON décrit ses propres colonnes. Un banc de
+// décodage QR et un relevé d'allocations n'ont pas les mêmes, et coder l'une
+// des deux formes en dur revenait à interdire l'autre.
+// ---------------------------------------------------------------------
+function renderBench(bench) {
+  if (!bench) return;
+  $('bench-section').hidden = false;
+  $('bench-note').textContent = bench.note ?? '';
+  $('bench-updated').textContent = bench.updated ? `relevé du ${bench.updated}` : '';
+
+  $('bench-summary').innerHTML = (bench.summary ?? [])
+    .map(
+      (s) => `<div class="kpi">
+        <div class="kpi__v" data-s="${esc(s.state ?? 'good')}">${esc(s.value)}</div>
+        <div class="kpi__l">${esc(s.label)}</div>
+        ${s.note ? `<div class="kpi__n">${esc(s.note)}</div>` : ''}
+      </div>`,
+    )
+    .join('');
+
+  const cols = bench.columns ?? [];
+  const rows = bench.rows ?? [];
+  $('bench-table').innerHTML = !cols.length
+    ? ''
+    : `<thead><tr>${cols.map((c) => `<th>${esc(c.t)}</th>`).join('')}</tr></thead>`
+      + `<tbody>${rows
+        .map(
+          (r) =>
+            `<tr>${cols
+              .map((c) => {
+                const v = r[c.k];
+                const cls = c.num ? ' class="num"' : '';
+                const st = r[`${c.k}_s`] ? ` data-s="${esc(r[`${c.k}_s`])}"` : '';
+                return `<td${cls}${st}>${esc(v ?? '')}</td>`;
+              })
+              .join('')}</tr>`,
+        )
+        .join('')}</tbody>`;
+}
+
+// ---------------------------------------------------------------------
+// Comment tester — repris de NextQR, où il était écrit en dur dans le HTML.
+// En données, il devient le même panneau pour tous les projets.
+// ---------------------------------------------------------------------
+function renderTest(test) {
+  if (!test || !(test.steps ?? []).length) return;
+  $('test-section').hidden = false;
+  $('test-steps').innerHTML = test.steps
+    .map(
+      (s, i) => `<div>
+        <span class="step">${esc(s.step ?? String(i + 1))}</span>
+        <h3>${esc(s.title ?? '')}</h3>
+        <p>${esc(s.text ?? '')}</p>
+        ${(s.commands ?? []).length ? `<code>${(s.commands ?? []).map(esc).join('\n')}</code>` : ''}
+      </div>`,
+    )
+    .join('');
+}
+
+// ---------------------------------------------------------------------
+// Le rail de liens. Les deux pages sœurs y entrent toutes seules quand leur
+// fichier existe : les câbler à la main dans dix-huit roadmap.json, c'est
+// dix-huit occasions d'en oublier une.
+// ---------------------------------------------------------------------
+function renderLinks(roadmap, has) {
+  const auto = [];
+  if (has.marche) {
+    auto.push({ url: 'marche.html', label: 'Le marché', inside: true,
+                note: 'qui existe déjà en face, et quelle case reste vide' });
+  }
+  auto.push({ url: 'etat.html', label: 'Où on en est', inside: true,
+              note: 'les faits mesurés du dépôt — page générée, jamais écrite à la main' });
+
+  const given = (roadmap?.links ?? []).filter((l) => !/^(marche|etat)\.html$/.test(l.url));
+  $('links').innerHTML = [...auto, ...given]
+    .map(
+      (l) =>
+        `<a href="${esc(l.url)}"${l.inside ? ' data-in' : ' target="_blank" rel="noopener noreferrer"'} title="${esc(l.note ?? l.url)}">${esc(l.label)}</a>`,
+    )
+    .join('');
+}
+
 async function load() {
-  const [roadmap, changelog, system] = await Promise.all(
-    ['roadmap.json', 'changelog.json', 'system.json'].map((u) =>
-      fetch(u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ),
+  const [roadmap, changelog, system, vision, bench, test, marche] = await Promise.all(
+    ['roadmap.json', 'changelog.json', 'system.json', 'vision.json',
+     'bench.json', 'test.json', 'marche.json'].map(grab),
   );
+
+  renderVision(vision);
+  renderBench(bench);
+  renderTest(test);
+  renderLinks(roadmap, { marche: !!marche });
 
   if (roadmap) {
     $('epic').textContent = roadmap.epic ?? '';
+    document.title = `${roadmap.epic ?? 'projet'} — cockpit`;
     $('goal').textContent = roadmap.goal ?? '';
     $('updated').textContent = `mis à jour ${roadmap.updated ?? '—'}`;
+
     $('gantt').innerHTML = renderGantt(roadmap);
-    $('gantt-legend').innerHTML = TASK_STATES.map(
-      (s) =>
-        `<span class="chip"><span class="swatch" style="background:${s.color};opacity:${s.opacity}"></span>${s.label}</span>`,
-    ).join('');
+    // La légende décrit ce que la figure encode, pas la liste des statuts
+    // possibles : les tâches ne sont plus des barres, donc annoncer quatre
+    // couleurs de tâche serait décrire une image qui n'existe plus.
+    $('gantt-legend').innerHTML =
+      [
+        ['#34d399', 0.55, 'part des tâches faites'],
+        ['#fbbf24', 1, 'sprint en cours, et la tâche en vol'],
+        ['#fb7185', 1, 'au moins une tâche bloquée'],
+      ]
+        .map(
+          ([color, opacity, label]) =>
+            `<span class="chip"><span class="swatch" style="background:${color};opacity:${opacity}"></span>${label}</span>`,
+        )
+        .join('') +
+      '<span class="chip" style="color:var(--zinc-500)">le détail des tâches est dans le journal</span>';
 
     const all = (roadmap.sprints ?? []).flatMap((s) => s.tasks ?? []);
     const done = all.filter((t) => t.status === 'done').length;
@@ -175,7 +379,7 @@ async function load() {
     $('backlog').innerHTML = (roadmap.backlog ?? [])
       .map(
         (b) =>
-          `<li><b style="color:var(--txt)">${esc(b.title)}</b><br><span style="color:var(--txt-faint)">${esc(b.note ?? '')}</span></li>`,
+          `<li><b>${esc(b.title)}</b><br><span style="color:var(--zinc-400)">${esc(b.note ?? '')}</span></li>`,
       )
       .join('');
   }
@@ -234,7 +438,7 @@ async function load() {
     $('edges').innerHTML = (system.edges ?? [])
       .map(
         (e) =>
-          `<div><b style="color:var(--txt)">${esc(e.from)}</b> <span class="arrow">→</span> <b style="color:var(--txt)">${esc(e.to)}</b> <span style="color:var(--txt-faint)">${esc(e.label ?? '')}</span></div>`,
+          `<div><b>${esc(e.from)}</b> <span class="arrow">→</span> <b>${esc(e.to)}</b> <span style="color:var(--zinc-400)">${esc(e.label ?? '')}</span></div>`,
       )
       .join('');
   }

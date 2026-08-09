@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Miaou · cockpit</title>
+    <style>
+      /* -------------------------------------------------------------------
+         Jetons de design. Fond encre, accents jaune/rouge : le cockpit et
+         le jeu doivent avoir la même voix.
+         ------------------------------------------------------------------- */
+      :root {
+        --bg: #0b0a09;
+        --bg-1: #131110;
+        --bg-2: #1a1715;
+        --line: #2a2522;
+        --line-strong: #3d3631;
+        --txt: #ece3d2;
+        --txt-soft: #9c9184;
+        --txt-faint: #625950;
+        --ink: #141210;
+        --yellow: #e9bb3c;
+        --red: #c4322a;
+        --green: #4fae7c;
+        --blue: #4f90b8;
+        --amber: #d99a2b;
+        --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+        --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        background-image:
+          radial-gradient(900px 480px at 88% -12%, rgba(233, 187, 60, 0.07), transparent),
+          radial-gradient(700px 420px at 0% 0%, rgba(196, 50, 42, 0.06), transparent);
+        color: var(--txt);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-height: 100vh;
+      }
+
+      a {
+        color: var(--blue);
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--line-strong);
+        border-radius: 4px;
+      }
+
+      /* --- chrome ------------------------------------------------------- */
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 14px 24px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(11, 10, 9, 0.85);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(6px);
+      }
+
+      .brand {
+        font-family: var(--sans);
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: 0.16em;
+      }
+      .brand .n {
+        color: var(--yellow);
+      }
+      .brand .tag {
+        margin-left: 8px;
+        font-size: 9px;
+        letter-spacing: 0.28em;
+        color: var(--txt-faint);
+        border: 1px solid var(--line-strong);
+        padding: 2px 6px;
+        vertical-align: middle;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        color: var(--txt-soft);
+        border: 1px solid var(--line);
+        padding: 3px 8px;
+        border-radius: 999px;
+      }
+
+      .spacer {
+        margin-left: auto;
+      }
+
+      main {
+        padding: 22px 24px 60px;
+        display: grid;
+        gap: 22px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      section {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: linear-gradient(180deg, var(--bg-1), rgba(0, 0, 0, 0.35));
+        padding: 18px 20px;
+      }
+
+      h2 {
+        font-family: var(--sans);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin: 0 0 4px;
+      }
+
+      .sub {
+        color: var(--txt-faint);
+        font-size: 10.5px;
+        margin: 0 0 16px;
+      }
+
+      /* --- hero --------------------------------------------------------- */
+
+      .hero {
+        border-color: rgba(233, 187, 60, 0.25);
+        background: linear-gradient(180deg, rgba(233, 187, 60, 0.05), rgba(0, 0, 0, 0.4));
+      }
+      .hero__numeral {
+        font-family: var(--sans);
+        font-weight: 900;
+        font-size: 46px;
+        line-height: 1;
+        letter-spacing: 0.04em;
+        color: var(--txt);
+        text-shadow: 3px 3px 0 var(--red);
+      }
+      .hero__epic {
+        font-family: var(--sans);
+        font-size: 15px;
+        font-weight: 600;
+        margin: 12px 0 6px;
+      }
+      .hero__goal,
+      .hero__narrative {
+        color: var(--txt-soft);
+        line-height: 1.75;
+        max-width: 105ch;
+        margin: 0 0 10px;
+      }
+      .hero__focus {
+        border-left: 3px solid var(--yellow);
+        padding-left: 12px;
+        color: var(--txt);
+        line-height: 1.7;
+        max-width: 105ch;
+      }
+      .hero__stats {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .kpi {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        min-width: 104px;
+        background: rgba(0, 0, 0, 0.25);
+      }
+      .kpi__v {
+        font-family: var(--sans);
+        font-size: 19px;
+        font-weight: 700;
+      }
+      .kpi__l {
+        font-size: 9px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--txt-faint);
+      }
+
+      /* --- gantt / burn-up ---------------------------------------------- */
+
+      .scroll {
+        overflow-x: auto;
+      }
+      svg text {
+        font-family: var(--mono);
+      }
+
+      .chips {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 10px;
+        color: var(--txt-soft);
+        margin-bottom: 10px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        display: inline-block;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: minmax(300px, 360px) 1fr;
+        gap: 22px;
+      }
+      @media (max-width: 900px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .journal {
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+      .entry {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: rgba(0, 0, 0, 0.22);
+      }
+      .entry__head {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .entry__date {
+        color: var(--yellow);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+      }
+      .entry__title {
+        font-family: var(--sans);
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .item {
+        display: grid;
+        grid-template-columns: 46px 1fr;
+        gap: 10px;
+        padding: 5px 0;
+        border-top: 1px dashed var(--line);
+        line-height: 1.7;
+        color: var(--txt-soft);
+      }
+      .item .tag {
+        color: var(--txt-faint);
+        font-size: 10px;
+      }
+      .item.done .tag {
+        color: var(--green);
+      }
+
+      .next {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .next li {
+        margin-bottom: 8px;
+        line-height: 1.7;
+        color: var(--txt-soft);
+      }
+      .blocked {
+        color: var(--red);
+        font-size: 10px;
+        display: block;
+      }
+
+      /* --- system map ---------------------------------------------------- */
+
+      .layer {
+        margin-bottom: 14px;
+      }
+      .layer__name {
+        font-family: var(--sans);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--yellow);
+        margin-bottom: 8px;
+      }
+      .layer__name span {
+        color: var(--txt-faint);
+        font-weight: 400;
+        letter-spacing: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 10px;
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: rgba(0, 0, 0, 0.25);
+      }
+      .card__title {
+        font-family: var(--sans);
+        font-weight: 600;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .card__path {
+        color: var(--txt-faint);
+        font-size: 10px;
+        margin: 3px 0 6px;
+      }
+      .card__role {
+        color: var(--txt-soft);
+        line-height: 1.6;
+        font-size: 11px;
+      }
+      .card__ports {
+        margin-top: 7px;
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .port {
+        font-size: 9px;
+        color: var(--txt-faint);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 1px 7px;
+      }
+
+      .edges {
+        margin-top: 12px;
+        display: grid;
+        gap: 4px;
+        font-size: 10.5px;
+        color: var(--txt-soft);
+      }
+      .edges .arrow {
+        color: var(--txt-faint);
+      }
+
+      footer {
+        padding: 0 24px 30px;
+        max-width: 1400px;
+        margin: 0 auto;
+        color: var(--txt-faint);
+        font-size: 10px;
+        line-height: 1.8;
+      }
+      footer code {
+        color: var(--txt-soft);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="brand"
+        ><span class="n">Miaou</span> · COCKPIT<span class="tag">SUIVI PROJET</span></span
+      >
+      <span class="pill" id="stack">—</span>
+      <span class="spacer"></span>
+      <span class="pill" id="updated">—</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero__numeral">Miaou</div>
+        <div class="hero__epic" id="epic">—</div>
+        <p class="hero__goal" id="goal"></p>
+        <p class="hero__narrative" id="narrative"></p>
+        <p class="hero__focus" id="focus"></p>
+        <div class="hero__stats" id="kpis"></div>
+      </section>
+
+      <section>
+        <h2>🗺️ Feuille de route</h2>
+        <p class="sub">
+          Une barre par tâche, groupée par sprint. Les tâches n'ont pas de dates propres : la barre
+          est déduite en découpant la durée du sprint par index, ce qui donne l'ordre sans mentir sur
+          des échéances qu'on n'a pas fixées.
+        </p>
+        <div class="chips" id="gantt-legend"></div>
+        <div class="scroll" id="gantt"></div>
+      </section>
+
+      <section>
+        <h2>📈 Suivi du projet</h2>
+        <p class="sub">Tâches terminées cumulées, journal de session, et ce qui vient ensuite.</p>
+        <div class="split">
+          <div>
+            <div id="burnup"></div>
+            <h2 style="margin-top: 18px">Ensuite</h2>
+            <ul class="next" id="next"></ul>
+            <h2 style="margin-top: 18px">Réserve</h2>
+            <ul class="next" id="backlog"></ul>
+          </div>
+          <div class="journal" id="journal"></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>🧩 Carte système</h2>
+        <p class="sub" id="system-summary"></p>
+        <div id="system"></div>
+        <div class="edges" id="edges"></div>
+      </section>
+    </main>
+
+    <footer>
+      Cockpit local, non déployé. Les données viennent de trois fichiers déclaratifs
+      (<code>roadmap.json</code>, <code>changelog.json</code>, <code>system.json</code>) rendus côté
+      client — aucun serveur, aucune dépendance.
+      &nbsp;·&nbsp; <a href="https://github.com/benoitbac/MyLovelyWebCat">Dépôt</a>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
