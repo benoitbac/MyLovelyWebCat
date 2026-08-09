@@ -1,0 +1,39 @@
+{
+  "provenance": "recalled",
+  "updated": "2026-08-09",
+  "claim": "Le compagnon virtuel est un genre ancien et encombré. **Le pont entre le compagnon à l'écran et le vrai chat resté seul à la maison, lui, n'existe pas.**",
+  "families": [
+    {
+      "family": "Animaux virtuels",
+      "actors": "Tamagotchi, Pou, Neko Atsume",
+      "do": "Un compagnon à nourrir et à regarder",
+      "dont": "Aucun lien avec un animal réel ; l'attachement est entièrement fictif"
+    },
+    {
+      "family": "Compagnons de bureau",
+      "actors": "Bonzi/Shimeji, Desktop Goose, Bongo Cat",
+      "do": "Occuper un coin d'écran",
+      "dont": "Décoratifs, sans économie ni progression"
+    },
+    {
+      "family": "Occupe-chat",
+      "actors": "Games for Cats, Cat Fishing",
+      "do": "Une proie mobile sur tablette",
+      "dont": "Boucle unique, aucune mémoire, rien à distance"
+    },
+    {
+      "family": "Caméras animaux",
+      "actors": "Furbo, Petcube",
+      "do": "Voir, parler, lancer une friandise — à distance",
+      "dont": "Matériel à acheter, et aucun jeu : la caméra regarde, elle ne joue pas"
+    }
+  ],
+  "gap": "La case vide relie les trois : un compagnon de bureau, un occupe-chat pour le vrai félin, et **un pont téléphone ↔ maison** — sans matériel dédié, dans le navigateur.",
+  "sections": [],
+  "size": [],
+  "reserve": [
+    "Page établie de mémoire. Aucun de ces produits n'a été essayé.",
+    "Le pont vers le vrai chat suppose un écran chez soi et un chat qui s'y intéresse. Ni l'un ni l'autre n'est vérifié.",
+    "Aucun chiffre de marché, et le genre est dominé par des gratuits : le consentement à payer est inconnu."
+  ]
+}
