@@ -9,7 +9,7 @@
 Trois couches, un même chat :
 🖥️ un **compagnon de bureau** façon Tamagotchi · 🧶 un **occupe-chat** pour ton vrai félin resté seul · 📱 un **pont téléphone ↔ maison** pour le filmer, lui parler et lui lancer un jeu à distance.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-8b7bf5.svg)](LICENSE)
+[![Licence](https://img.shields.io/badge/licence-propri%C3%A9taire-e11d48.svg)](LICENSE)
 ![WebGPU](https://img.shields.io/badge/WebGPU-rendering-66d9ff.svg)
 ![Stack](https://img.shields.io/badge/Vite%20·%20TS%20·%20Svelte-9a7bff.svg)
 ![Status](https://img.shields.io/badge/status-sprint%203-ff9ecf.svg)
@@ -58,7 +58,7 @@ Voir [CONTRIBUTING.md](CONTRIBUTING.md) et le [Code de conduite](CODE_OF_CONDUCT
 
 ## 📄 Licence
 
-[MIT](LICENSE).
+[Propriétaire — tous droits réservés](LICENSE).
 
 <div align="center">
 <sub>Fait avec 🐈 et beaucoup de fluidité.</sub>
