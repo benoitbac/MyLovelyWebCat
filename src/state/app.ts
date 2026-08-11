@@ -6,7 +6,9 @@ import { kvGet, kvSet } from './db';
 
 export type Screen = 'create' | 'home' | 'game';
 
-export const screen = writable<Screen>('home');
+// On démarre sur le créateur : évite de monter le monde 3D une frame au boot
+// (mount gâché + connexion réseau fantôme) avant que startApp ne s'exécute.
+export const screen = writable<Screen>('create');
 
 export interface Profile {
   created: boolean;

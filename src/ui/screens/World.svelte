@@ -4,7 +4,8 @@
   import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
   import { CatShow } from '../../creator/catshow';
   import { CAT_CATALOG } from '../../creator/catalog';
-  import { catConfig, getImportedGlb } from '../../state/cat';
+  import { catConfig, getImportedGlb, DEFAULT_CAT, type CatConfig } from '../../state/cat';
+  import { Arena } from '../../net/arena';
   import { ready } from '../../game/wasm';
   import { Life } from '../../wasm/miaou_engine';
   import { profile, go, addCoins } from '../../state/app';
@@ -60,6 +61,62 @@
   let raf = 0;
   let ro: ResizeObserver;
   let disposed = false; // le composant peut être détruit pendant un await du montage
+
+  // Multijoueur « bureau » : présence + position des chats des collègues.
+  let peers = $state(0);
+  let arena: Arena | null = null;
+  interface Remote {
+    show: CatShow;
+    pos: THREE.Vector3;
+    target: THREE.Vector3;
+    facing: number;
+    seeded: boolean;
+  }
+  const remotes = new Map<string, Remote>();
+  const peerInfo = new Map<string, { name: string; dna: string }>();
+  let poseAcc = 0;
+
+  function remoteConfig(id: string): CatConfig {
+    const info = peerInfo.get(id);
+    if (info?.dna) {
+      try {
+        return { ...DEFAULT_CAT, ...(JSON.parse(info.dna) as Partial<CatConfig>) };
+      } catch {
+        /* dna illisible : modèle par défaut */
+      }
+    }
+    return { ...DEFAULT_CAT };
+  }
+
+  function spawnRemote(id: string): Remote {
+    const cfg = remoteConfig(id);
+    const rshow = new CatShow();
+    scene.add(rshow.group);
+    const r: Remote = {
+      show: rshow,
+      pos: new THREE.Vector3(),
+      target: new THREE.Vector3(),
+      facing: 0,
+      seeded: false,
+    };
+    remotes.set(id, r);
+    const url = cfg.base && cfg.base !== 'imported' ? cfg.base : CAT_CATALOG[0].url;
+    rshow
+      .loadUrl(url)
+      .then(() => rshow.applyLook(cfg))
+      .catch(() => void rshow.loadUrl(CAT_CATALOG[0].url).catch(() => {}));
+    return r;
+  }
+
+  function dropRemote(id: string): void {
+    const r = remotes.get(id);
+    if (!r) return;
+    scene.remove(r.show.group);
+    r.show.dispose();
+    remotes.delete(id);
+    peerInfo.delete(id);
+    peers = peerInfo.size;
+  }
 
   // Déplacement + caméra
   const catPos = new THREE.Vector3(0, 0, 0);
@@ -264,6 +321,30 @@
     await loadCat();
     if (disposed) return;
 
+    // Rejoint l'arène du bureau. Silencieux si le serveur est éteint → jeu solo.
+    arena = new Arena({
+      onJoined: (id, name, dna) => {
+        peerInfo.set(id, { name, dna });
+        peers = peerInfo.size;
+      },
+      onLeft: (id) => dropRemote(id),
+      onPose: (id, x, z, facing) => {
+        if (disposed) return;
+        if (!peerInfo.has(id)) {
+          peerInfo.set(id, { name: 'Chat', dna: '' });
+          peers = peerInfo.size;
+        }
+        let r = remotes.get(id) ?? spawnRemote(id);
+        r.target.set(x, 0, z);
+        r.facing = facing;
+        if (!r.seeded) {
+          r.pos.copy(r.target);
+          r.seeded = true;
+        }
+      },
+    });
+    void arena.join('bureau', $catConfig.name || $profile.name, JSON.stringify($catConfig));
+
     ro = new ResizeObserver(resize);
     ro.observe(host);
     resize();
@@ -324,6 +405,19 @@
       show.update(dt);
       sun.target.position.copy(catPos);
 
+      // Réseau : diffuse ma position, interpole celle des collègues.
+      poseAcc += dt;
+      if (poseAcc > 0.1) {
+        poseAcc = 0;
+        void arena?.sendPose(catPos.x, catPos.z, facing);
+      }
+      for (const r of remotes.values()) {
+        r.pos.lerp(r.target, 1 - Math.exp(-dt * 6));
+        r.show.group.position.set(r.pos.x, 0, r.pos.z);
+        r.show.group.rotation.y += (r.facing - r.show.group.rotation.y) * Math.min(1, dt * 10);
+        r.show.update(dt);
+      }
+
       // Caméra 3e personne (orbite autour du chat)
       const off = new THREE.Vector3(
         Math.sin(camYaw) * Math.cos(camPitch),
@@ -345,6 +439,8 @@
     cancelAnimationFrame(raf);
     ro?.disconnect();
     if (life) void kvSet('life', { hunger, energy, joy, hygiene });
+    void arena?.leave();
+    for (const id of [...remotes.keys()]) dropRemote(id);
     show?.dispose();
     pmrem?.dispose();
     renderer?.dispose();
@@ -378,7 +474,10 @@
 
   <header class="topbar">
     <div class="who"><b>{$catConfig.name || $profile.name}</b></div>
-    <div class="coins">🪙 {$profile.coins.toLocaleString('fr-FR')}</div>
+    <div class="right">
+      {#if peers > 0}<div class="peers">🐾 {peers} au bureau</div>{/if}
+      <div class="coins">🪙 {$profile.coins.toLocaleString('fr-FR')}</div>
+    </div>
   </header>
 
   <div class="needs">
@@ -478,6 +577,12 @@
     font-size: 18px;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   }
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
   .coins {
     font-weight: 700;
     color: var(--gold);
@@ -486,6 +591,15 @@
     padding: 6px 12px;
     border-radius: 999px;
     pointer-events: auto;
+  }
+  .peers {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--stroke);
+    padding: 6px 12px;
+    border-radius: 999px;
   }
   .needs {
     position: absolute;

@@ -2,6 +2,9 @@ using Miaou.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Port fixe pour que le client web sache où joindre l'arène en dev.
+builder.WebHost.UseUrls("http://localhost:5279");
+
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<Leaderboard>();
 builder.Services.AddCors(options =>

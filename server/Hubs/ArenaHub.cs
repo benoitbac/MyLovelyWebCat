@@ -29,6 +29,10 @@ public class ArenaHub : Hub
     public Task UpdateCursor(string room, double x, double y) =>
         Clients.OthersInGroup(room).SendAsync("CursorMove", Context.ConnectionId, x, y);
 
+    // Position du chat dans le monde 3D : présence + déplacement des collègues.
+    public Task UpdatePose(string room, double x, double z, double facing) =>
+        Clients.OthersInGroup(room).SendAsync("PoseUpdate", Context.ConnectionId, x, z, facing);
+
     // Petit "coucou" / interaction sociale entre chats.
     public Task Wave(string room) =>
         Clients.OthersInGroup(room).SendAsync("Wave", Context.ConnectionId);
